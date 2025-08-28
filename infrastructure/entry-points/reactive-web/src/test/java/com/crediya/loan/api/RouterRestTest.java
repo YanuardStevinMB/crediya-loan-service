@@ -1,60 +1,57 @@
 package com.crediya.loan.api;
 
-import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.WebFluxTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;   // ✅
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.ContextConfiguration; // ✅
+import org.springframework.test.context.bean.override.mockito.MockitoBean; // ✅
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.reactive.function.server.ServerRequest;
+import org.springframework.web.reactive.function.server.ServerResponse;
 
-@ContextConfiguration(classes = {RouterRest.class, Handler.class})
+import java.util.Map;
+
+import static org.mockito.ArgumentMatchers.any;
+
 @WebFluxTest
+@ContextConfiguration(classes = { RouterRest.class, RouterRestTest.TestConfig.class }) // ✅ carga explícita
 class RouterRestTest {
 
     @Autowired
     private WebTestClient webTestClient;
 
-    @Test
-    void testListenGETUseCase() {
-        webTestClient.get()
-                .uri("/api/usecase/path")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class)
-                .value(userResponse -> {
-                            Assertions.assertThat(userResponse).isEmpty();
-                        }
-                );
-    }
+    // ✅ reemplaza @MockBean (deprecado) por @MockitoBean
+    @MockitoBean
+    private ApplicationHandler handler;
 
     @Test
-    void testListenGETOtherUseCase() {
-        webTestClient.get()
-                .uri("/api/otherusercase/path")
-                .accept(MediaType.APPLICATION_JSON)
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class)
-                .value(userResponse -> {
-                            Assertions.assertThat(userResponse).isEmpty();
-                        }
-                );
-    }
+    void postSolicitud_routesToHandler_andReturnsOkJson() {
+        Mockito.when(handler.createApplication(any(ServerRequest.class)))
+                .thenReturn(ServerResponse.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(Map.of("ok", true)));
 
-    @Test
-    void testListenPOSTUseCase() {
         webTestClient.post()
-                .uri("/api/usecase/otherpath")
-                .accept(MediaType.APPLICATION_JSON)
-                .bodyValue("")
+                .uri("/api/v1/solicitud")
+                .contentType(MediaType.APPLICATION_JSON)
+                .bodyValue("{\"dummy\":\"payload\"}")
                 .exchange()
                 .expectStatus().isOk()
-                .expectBody(String.class)
-                .value(userResponse -> {
-                            Assertions.assertThat(userResponse).isEmpty();
-                        }
-                );
+                .expectHeader().contentTypeCompatibleWith(MediaType.APPLICATION_JSON)
+                .expectBody()
+                .jsonPath("$.ok").isEqualTo(true);
+    }
+
+    /** Bean necesario para que el Router compile: .filter(errorFilter) */
+    @Configuration // ✅ importante para que sea detectada como configuración
+    static class TestConfig {
+        @Bean
+        ApiErrorFilter apiErrorFilter() {
+            return new ApiErrorFilter(); // passthrough suficiente para este test
+        }
     }
 }

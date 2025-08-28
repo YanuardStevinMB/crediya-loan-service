@@ -7,6 +7,8 @@ public final class Messages {
     public static final String REQ_BODY_REQUIRED   = "Los datos de la solicitud son obligatorios";
     public static final String DOC_REQUIRED        = "El documento de identidad es obligatorio";
     public static final String EMAIL_REQUIRED      = "El correo electrónico es obligatorio";
+    public static final String AMOUNT_INVALID      = "El correo electrónico es obligatorio";
+
     public static final String EMAIL_INVALID       = "Correo electrónico inválido";
     public static final String AMOUNT_REQUIRED     = "El monto es obligatorio";
     public static final String AMOUNT_DECIMALS     = "El monto no debe tener más de 2 decimales";

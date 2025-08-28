@@ -61,7 +61,7 @@ public class RouterRest {
             ApplicationHandler handler,
             ApiErrorFilter errorFilter
     ) {
-        return route(POST("/api/v1/solicitud"), handler::save)
+        return route(POST("/api/v1/solicitud"), handler::createApplication)
                 .filter(errorFilter);
     }
 }

@@ -31,7 +31,7 @@ public class ApplicationHandler {
         return Mono.just(body);
     }
 
-    public Mono<ServerResponse> save(ServerRequest request) {
+    public Mono<ServerResponse> createApplication(ServerRequest request) {
         final String path = request.path();
 
         return request.bodyToMono(ApplicationSaveDto.class)
