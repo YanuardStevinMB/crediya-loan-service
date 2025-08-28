@@ -10,13 +10,18 @@ public final class Messages {
     public static final String AMOUNT_INVALID      = "El correo electrónico es obligatorio";
 
     public static final String EMAIL_INVALID       = "Correo electrónico inválido";
+
     public static final String AMOUNT_REQUIRED     = "El monto es obligatorio";
     public static final String AMOUNT_DECIMALS     = "El monto no debe tener más de 2 decimales";
     public static final String AMOUNT_RANGE        = "El monto debe estar en (0, 15000000]";
     public static final String TERM_REQUIRED       = "El plazo en meses es obligatorio";
     public static final String TERM_POSITIVE       = "El plazo en meses debe ser mayor a 0";
     public static final String LOAN_TYPE_REQUIRED  = "El tipo de préstamo es obligatorio";
-    public static final String LOAN_TYPE_NO_EXIST  = "El tipo de préstamo es obligatorio";
+    public static final String LOAN_TYPE_NO_EXIST  = "El tipo de préstamo no existe ";
+
+    public static final String DOC_NUMERIC  = "El documento solo puede tener dígitos (0-9)";
+    public static final String DOC_LENGTH   = "El documento debe tener entre 6 y 20 dígitos";
+
     public static String amountNotAllowed(BigDecimal amountMin, BigDecimal amountMax) {
         return
         "El monto debe estar entre " + amountMin + " y " + amountMax +" ";

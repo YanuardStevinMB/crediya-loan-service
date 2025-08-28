@@ -1,8 +1,8 @@
 package com.crediya.loan.api.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.NotNull;
+import com.crediya.loan.usecase.generaterequest.shared.Messages;
+import jakarta.validation.constraints.*;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -10,21 +10,23 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Schema(name = "ApplicationSaveDto")
 public record ApplicationSaveDto(
         Long Id,
-        @NotNull(message = "El campo 'amount' es obligatorio.")
+        @NotNull(message = Messages.AMOUNT_REQUIRED)
         BigDecimal amount,
 
-        @NotNull(message = "El campo 'term' es obligatorio.")
+        @NotNull(message = Messages. TERM_REQUIRED)
         LocalDate term,
 
-        @NotBlank(message = "El campo 'email' es obligatorio.")
-        @Size(max = 150, message = "email no debe exceder 150 caracteres.")
+        @NotBlank(message =  Messages.EMAIL_REQUIRED )
+        @Email
         String email,
 
-        @NotBlank(message = "El campo 'identityDocument' es obligatorio.")
-        @Size(max = 20, message = "identityDocument no debe exceder 20 caracteres.")
+
+        @NotBlank(message = Messages.DOC_REQUIRED)
+        @Pattern(regexp = "^[0-9]+$", message = Messages.DOC_NUMERIC)
+        @Size(min = 6, max = 20, message = Messages.DOC_LENGTH)
         String identityDocument,
 
-        @NotNull(message = "El campo 'loanTypeId' es obligatorio.")
+        @NotNull(message = Messages.LOAN_TYPE_REQUIRED)
         Long loanTypeId
 
 

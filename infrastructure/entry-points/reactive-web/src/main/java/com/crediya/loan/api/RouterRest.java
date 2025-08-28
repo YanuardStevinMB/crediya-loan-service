@@ -29,10 +29,10 @@ public class RouterRest {
                     path = "/api/v1/solicitud",
                     method = RequestMethod.POST,
                     beanClass = ApplicationHandler.class,
-                    beanMethod = "save",
+                    beanMethod = "createApplication",
                     operation = @Operation(
                             operationId = "createUser",
-                            summary = "Crear usuario",
+                            summary = "Generar solicitud",
                             requestBody = @RequestBody(
                                     required = true,
                                     content = @Content(schema = @Schema(implementation = ApplicationSaveDto.class))

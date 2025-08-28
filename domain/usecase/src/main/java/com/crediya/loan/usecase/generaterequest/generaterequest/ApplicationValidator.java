@@ -22,8 +22,14 @@ final class ApplicationValidator {
         if (a == null) throw new ValidationException(null, Messages.REQ_BODY_REQUIRED);
 
         // Documento
-        if (a.getIdentityDocument() == null || a.getIdentityDocument().isBlank())
+        String doc = a.getIdentityDocument();
+        if (doc == null || doc.isBlank())
             throw new ValidationException("identityDocument", Messages.DOC_REQUIRED);
+        if (!doc.chars().allMatch(Character::isDigit))
+            throw new ValidationException("identityDocument", Messages.DOC_NUMERIC);
+        if (doc.length() < 6 || doc.length() > 20)
+            throw new ValidationException("identityDocument", Messages.DOC_LENGTH);
+
 
         // Email
         if (a.getEmail() == null || a.getEmail().isBlank())
