@@ -1,0 +1,151 @@
+databaseChangeLog:
+  - changeSet:
+      id: create-table-tipo-prestamo
+      author: manuel
+      changes:
+        - createTable:
+            tableName: tipo_prestamo
+            tableOptions: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+            columns:
+              - column:
+                  name: id_tipo_prestamo
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_tipo_prestamo
+                    nullable: false
+              - column:
+                  name: nombre
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: monto_minimo
+                  type: DECIMAL(19,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: monto_maximo
+                  type: DECIMAL(19,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tasa_interes
+                  type: DECIMAL(5,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: validacion_automatica
+                  type: BOOLEAN
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: create-table-estados
+      author: manuel
+      changes:
+        - createTable:
+            tableName: estados
+            tableOptions: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+            columns:
+              - column:
+                  name: id_estado
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_estados
+                    nullable: false
+              - column:
+                  name: nombre
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: descripcion
+                  type: VARCHAR(255)
+              - column:
+                  name: codigo
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: estados
+            columnNames: codigo
+            constraintName: uq_estados_codigo
+
+  - changeSet:
+      id: create-table-solicitud
+      author: manuel
+      changes:
+        - createTable:
+            tableName: solicitud
+            tableOptions: "ENGINE=InnoDB DEFAULT CHARSET=utf8mb4"
+            columns:
+              - column:
+                  name: id_solicitud
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_solicitud
+                    nullable: false
+              - column:
+                  name: monto
+                  type: DECIMAL(19,2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: plazo
+                  type: DATE
+                  constraints:
+                    nullable: false
+              - column:
+                  name: email
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: documento_identidad
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: id_estado
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: id_tipo_prestamo
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - createIndex:
+            tableName: solicitud
+            indexName: idx_solicitud_estado
+            columns:
+              - column:
+                  name: id_estado
+        - createIndex:
+            tableName: solicitud
+            indexName: idx_solicitud_tipo_prestamo
+            columns:
+              - column:
+                  name: id_tipo_prestamo
+        - addForeignKeyConstraint:
+            baseTableName: solicitud
+            baseColumnNames: id_estado
+            referencedTableName: estados
+            referencedColumnNames: id_estado
+            constraintName: fk_solicitud_estado
+            onDelete: RESTRICT
+            onUpdate: CASCADE
+        - addForeignKeyConstraint:
+            baseTableName: solicitud
+            baseColumnNames: id_tipo_prestamo
+            referencedTableName: tipo_prestamo
+            referencedColumnNames: id_tipo_prestamo
+            constraintName: fk_solicitud_tipo_prestamo
+            onDelete: RESTRICT
+            onUpdate: CASCADE
