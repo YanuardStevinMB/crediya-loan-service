@@ -47,16 +47,18 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/webjars/**",
                                 "/actuator/**").permitAll()
-                        // Login abierto
-                        .pathMatchers(HttpMethod.POST, "/api/v1/login").permitAll()
-                        // Regla por rol
-                        .pathMatchers(HttpMethod.POST, "/api/v1/solicitud").hasAnyRole("CLIENTE")
+                        // Regla de lisdatod e solicitudes
+                        .pathMatchers(HttpMethod.GET, "/api/v1/solicitud/pending").permitAll()
+
+
                         // Regla datos de usuario
                         .pathMatchers(HttpMethod.POST, "/api/v1/usuarios").hasAnyRole("ADMIN","ASESOR","CLIENTE")
+
+                        //.hasAnyRole("CLIENTE")
                         // Resto autenticado
                         .anyExchange().authenticated()
                 )
-                // ⬇️ esto evita que Spring intente “/login”
+                //  evita que Spring intente “/login”
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint((exchange, ex) ->
                                 Mono.fromRunnable(() -> exchange.getResponse().setStatusCode(org.springframework.http.HttpStatus.UNAUTHORIZED)))

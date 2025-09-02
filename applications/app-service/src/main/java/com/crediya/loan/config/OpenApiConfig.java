@@ -16,9 +16,9 @@ public class OpenApiConfig {
         final String schemeName = "bearerAuth";
         return new OpenAPI()
                 .info(new Info()
-                        .title("IAM API")
+                        .title("LOAN API")
                         .version("v1")
-                        .description("API para autenticación y gestión de usuarios"))
+                        .description("API para las solicitudes  y gestión"))
                 .components(new Components().addSecuritySchemes(
                         schemeName,
                         new SecurityScheme()

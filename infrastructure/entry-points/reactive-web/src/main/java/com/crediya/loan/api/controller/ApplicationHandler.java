@@ -6,6 +6,7 @@ import com.crediya.loan.api.dto.ApiResponse;
 import com.crediya.loan.api.dto.ApplicationResponseDto;
 import com.crediya.loan.api.dto.ApplicationSaveDto;
 import com.crediya.loan.usecase.generaterequest.GenerateRequestUseCase;
+import com.crediya.loan.usecase.getpendingapplications.GetPendingApplicationsUseCase;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import reactor.core.publisher.Mono;
 public class ApplicationHandler {
 
     private final GenerateRequestUseCase generateRequestUseCase;
+    private final GetPendingApplicationsUseCase getPendingApplicationsUseCase;
     private final ApplicationMapper mapper;
     private final Validator validator;
 
@@ -46,4 +48,23 @@ public class ApplicationHandler {
                 );
 
     }
+
+    public Mono<ServerResponse> getPendingApplications(ServerRequest request) {
+        final String path = request.path();
+
+        int page = Integer.parseInt(request.queryParam("page").orElse("0"));
+        int size = Integer.parseInt(request.queryParam("size").orElse("10"));
+        String filter = request.queryParam("filter").orElse("");
+
+        return getPendingApplicationsUseCase.execute(page, size, filter)
+                .map(mapper::toResponseDto)
+                .collectList()
+                .flatMap(list -> ServerResponse.ok()
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .bodyValue(ApiResponse.ok(list, "Solicitudes pendientes", path))
+                );
+    }
+
+
+
 }
