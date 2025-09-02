@@ -1,6 +1,8 @@
 apply plugin: 'org.springframework.boot'
 
 dependencies {
+	implementation project(':shared')
+	implementation project(':rest-consumer')
 
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	implementation 'org.reactivecommons.utils:object-mapper:0.1.0'
@@ -8,7 +10,7 @@ dependencies {
     implementation project(':r2dbc-mysql')
     implementation project(':model')
     implementation project(':usecase')
- implementation project(':reactive-web')
+    implementation project(':reactive-web')
 
     implementation 'org.springframework.boot:spring-boot-starter'
     testImplementation 'com.fasterxml.jackson.core:jackson-databind'
@@ -20,6 +22,7 @@ dependencies {
     testImplementation 'com.tngtech.archunit:archunit:1.4.1'
     testImplementation 'com.fasterxml.jackson.core:jackson-databind'
     implementation "org.springframework.boot:spring-boot-starter-security"
+    implementation "org.springdoc:springdoc-openapi-starter-webflux-ui:2.6.0"
 
 }
 

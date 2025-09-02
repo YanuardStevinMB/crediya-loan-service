@@ -1,6 +1,7 @@
 package com.crediya.loan.api;
 
 import com.crediya.loan.api.applicationMapper.ApplicationMapper;
+import com.crediya.loan.api.controller.ApplicationHandler;
 import com.crediya.loan.api.dto.ApiResponse;
 import com.crediya.loan.model.application.Application;
 import com.crediya.loan.usecase.generaterequest.GenerateRequestUseCase;

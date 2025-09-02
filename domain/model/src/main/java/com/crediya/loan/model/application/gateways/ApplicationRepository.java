@@ -5,5 +5,5 @@ import reactor.core.publisher.Mono;
 
 public interface ApplicationRepository {
 
-Mono<Application> save(Application application);
+    Mono<Application> save(Application application);
 }

@@ -5,6 +5,7 @@ import com.crediya.loan.model.application.gateways.ApplicationRepository;
 import com.crediya.loan.model.loantype.gateways.LoanTypeRepository;
 import com.crediya.loan.model.states.gateways.StatesRepository;
 import com.crediya.loan.usecase.generaterequest.generaterequest.LoanTypeValidator;
+import com.crediya.loan.usecase.generaterequest.generaterequest.VerifyUserUseCase;
 import com.crediya.loan.usecase.generaterequest.shared.ConfigurationException;
 import com.crediya.loan.usecase.generaterequest.shared.Messages;
 import  com.crediya.loan.usecase.generaterequest.ApplicationValidator;
@@ -13,7 +14,6 @@ import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
 import java.util.logging.Logger;
-
 
 @RequiredArgsConstructor
 public class GenerateRequestUseCase {
@@ -24,6 +24,7 @@ public class GenerateRequestUseCase {
     private final ApplicationRepository applicationRepository;
     private final StatesRepository statesRepository;
     private final LoanTypeRepository loanTypeRepository;
+    private final VerifyUserUseCase verifyUserUseCase;
 
     public Mono<Application> execute(Application a) {
         return Mono.defer(() -> {
@@ -32,28 +33,32 @@ public class GenerateRequestUseCase {
 
             LOG.fine("GenerateRequestUseCase.execute() - inicio");
 
-            // 1) Validar que exista el tipo de préstamo y monto
-            return loanTypeRepository.findById(a.getLoanTypeId())
-                    .switchIfEmpty(Mono.error(
-                            new ConfigurationException(Messages.stateNotFound(Messages.LOAN_TYPE_NO_EXIST))
-                    ))
-                    .flatMap(loanType -> LoanTypeValidator.validateAmount(a, loanType)).doOnError(e->LOG.fine("GenerateRequestUseCase.execute() - inicio"))
-                    // 2) Traer estado inicial
-                    .flatMap(validApp ->
-                            statesRepository.findByCode(DEFAULT_STATE_CODE)
+
+            // 🔑 Primero valida el usuario y si pasa sigue el flujo
+            return verifyUserUseCase.execute(a.getIdentityDocument(), a.getEmail())
+                    .flatMap(valid ->
+                            loanTypeRepository.findById(a.getLoanTypeId())
                                     .switchIfEmpty(Mono.error(
-                                            new ConfigurationException(Messages.stateNotFound(DEFAULT_STATE_CODE))
+                                            new ConfigurationException(Messages.stateNotFound(Messages.LOAN_TYPE_NO_EXIST))
                                     ))
-                                    // 3) Asignar estado y guardar
-                                    .flatMap(state -> {
-                                        a.setStateId(state.getId());
-                                        LOG.fine(() -> "Estado inicial asignado: " + state.getCode());
-                                        return applicationRepository.save(a)
-                                                .doOnSuccess(saved -> LOG.info(() ->
-                                                        "Solicitud creada id=" + saved.getId()
-                                                                + ", state=" + state.getCode()
-                                                ));
-                                    })
+                                    .flatMap(loanType -> LoanTypeValidator.validateAmount(a, loanType))
+                                    // 2) Traer estado inicial
+                                    .flatMap(validApp ->
+                                            statesRepository.findByCode(DEFAULT_STATE_CODE)
+                                                    .switchIfEmpty(Mono.error(
+                                                            new ConfigurationException(Messages.stateNotFound(DEFAULT_STATE_CODE))
+                                                    ))
+                                                    // 3) Asignar estado y guardar
+                                                    .flatMap(state -> {
+                                                        a.setStateId(state.getId());
+                                                        LOG.fine(() -> "Estado inicial asignado: " + state.getCode());
+                                                        return applicationRepository.save(a)
+                                                                .doOnSuccess(saved -> LOG.info(() ->
+                                                                        "Solicitud creada id=" + saved.getId()
+                                                                                + ", state=" + state.getCode()
+                                                                ));
+                                                    })
+                                    )
                     )
                     .doOnError(e -> LOG.warning(() ->
                             "GenerateRequestUseCase.execute() error: " + e.getMessage()))

@@ -1,5 +1,8 @@
 package com.crediya.loan.config;
 
+import com.crediya.loan.shared.security.JwtProperties;
+import com.crediya.loan.shared.security.JwtReactiveAuthenticationManager;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.FilterType;
@@ -11,4 +14,10 @@ import org.springframework.context.annotation.FilterType;
         },
         useDefaultFilters = false)
 public class UseCasesConfig {
+
+    // ===== JWT (ya lo tenías) =====
+    @Bean
+    public JwtReactiveAuthenticationManager jwtReactiveAuthenticationManager(JwtProperties props) {
+        return new JwtReactiveAuthenticationManager(props);
+    }
 }

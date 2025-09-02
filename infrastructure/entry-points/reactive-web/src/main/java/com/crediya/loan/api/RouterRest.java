@@ -1,8 +1,8 @@
 package com.crediya.loan.api;
 
+import com.crediya.loan.api.controller.ApplicationHandler;
 import com.crediya.loan.api.dto.ApplicationResponseDto;
 import com.crediya.loan.api.dto.ApplicationSaveDto;
-import  com.crediya.loan.api.ApiErrorResponse;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -60,8 +60,11 @@ public class RouterRest {
     public RouterFunction<ServerResponse> routerFunction(
             ApplicationHandler handler,
             ApiErrorFilter errorFilter
+
     ) {
-        return route(POST("/api/v1/solicitud"), handler::createApplication)
+        return route(
+//                Get(GET("/api/v1/solicitudes"), h::list)
+                POST("/api/v1/solicitud"), handler::createApplication)
                 .filter(errorFilter);
     }
 }

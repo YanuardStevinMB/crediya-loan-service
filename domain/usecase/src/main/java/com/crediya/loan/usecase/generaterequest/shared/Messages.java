@@ -22,6 +22,12 @@ public final class Messages {
     public static final String DOC_NUMERIC  = "El documento solo puede tener dígitos (0-9)";
     public static final String DOC_LENGTH   = "El documento debe tener entre 6 y 20 dígitos";
 
+    //validated User
+    public static final String USER_INVALID =
+            "Los datos ingresados no corresponden a un usuario registrado en el sistema. " +
+                    "Por favor, intenta nuevamente o ponte en contacto con un administrador.";
+
+
     public static String amountNotAllowed(BigDecimal amountMin, BigDecimal amountMax) {
         return
         "El monto debe estar entre " + amountMin + " y " + amountMax +" ";

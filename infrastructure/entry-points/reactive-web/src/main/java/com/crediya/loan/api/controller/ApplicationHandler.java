@@ -1,4 +1,4 @@
-package com.crediya.loan.api;
+package com.crediya.loan.api.controller;
 
 
 import com.crediya.loan.api.applicationMapper.ApplicationMapper;
@@ -33,6 +33,7 @@ public class ApplicationHandler {
 
     public Mono<ServerResponse> createApplication(ServerRequest request) {
         final String path = request.path();
+
 
         return request.bodyToMono(ApplicationSaveDto.class)
                 .flatMap(this::validate)
