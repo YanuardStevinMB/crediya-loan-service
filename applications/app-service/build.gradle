@@ -1,6 +1,7 @@
 apply plugin: 'org.springframework.boot'
 
 dependencies {
+	implementation project(':security')
 	implementation project(':shared')
 	implementation project(':rest-consumer')
 

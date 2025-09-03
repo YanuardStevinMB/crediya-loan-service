@@ -1,15 +1,14 @@
 package com.crediya.loan.usecase.generaterequest.generaterequest;
-
-import com.crediya.loan.usecase.generaterequest.gateway.DocumentVerificationGateway;
+import com.crediya.loan.usecase.generaterequest.gateway.UserManagementGateway;
 import com.crediya.loan.usecase.generaterequest.shared.Messages;
 import com.crediya.loan.usecase.generaterequest.shared.ValidationException;
 import reactor.core.publisher.Mono;
 
 public class VerifyUserUseCase {
 
-    private final DocumentVerificationGateway gateway;
+    private final UserManagementGateway gateway;
 
-    public VerifyUserUseCase(DocumentVerificationGateway gateway) {
+    public VerifyUserUseCase(UserManagementGateway gateway) {
         this.gateway = gateway;
     }
 

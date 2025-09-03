@@ -1,4 +1,4 @@
-package com.crediya.loan.shared.security;
+package com.crediya.loan.security;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

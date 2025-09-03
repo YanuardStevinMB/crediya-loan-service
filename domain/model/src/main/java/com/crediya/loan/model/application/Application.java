@@ -1,6 +1,7 @@
 package com.crediya.loan.model.application;
 
 import lombok.*;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -8,7 +9,8 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder(toBuilder = true)
+
 public class Application {
     private Long id;
     private BigDecimal amount;

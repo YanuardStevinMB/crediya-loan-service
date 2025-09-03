@@ -1,4 +1,4 @@
-package com.crediya.loan.shared.security;
+package com.crediya.loan.security;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;

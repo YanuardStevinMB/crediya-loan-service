@@ -58,7 +58,9 @@ public class RouterRest {
                             parameters = {
                                     @Parameter(name = "page", description = "Número de página (0-based)", example = "0"),
                                     @Parameter(name = "size", description = "Tamaño de la página", example = "10"),
-                                    @Parameter(name = "filter", description = "Filtro por email o documento", example = "juan")
+                                    @Parameter(name = "filter", description = "Filtro por email o documento", example = "juan"),
+                                    @Parameter(name = "state", description = "Estado de la solicitud (opcional)", example = "2")
+
                             },
                             responses = {
                                     @ApiResponse(

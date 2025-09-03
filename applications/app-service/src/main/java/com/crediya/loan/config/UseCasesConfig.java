@@ -1,7 +1,7 @@
 package com.crediya.loan.config;
 
-import com.crediya.loan.shared.security.JwtProperties;
-import com.crediya.loan.shared.security.JwtReactiveAuthenticationManager;
+import com.crediya.loan.security.JwtProperties;
+import com.crediya.loan.security.JwtReactiveAuthenticationManager;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;

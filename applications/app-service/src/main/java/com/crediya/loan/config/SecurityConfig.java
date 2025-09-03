@@ -1,5 +1,6 @@
 package com.crediya.loan.config;
 
+import com.crediya.loan.security.JwtProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -12,33 +13,20 @@ import reactor.core.publisher.Mono;
 
 @Configuration
 @EnableWebFluxSecurity
-@EnableConfigurationProperties(com.crediya.loan.shared.security.JwtProperties.class)
+@EnableConfigurationProperties(JwtProperties.class)
 @RequiredArgsConstructor
 
 public class SecurityConfig {
     private final BearerServerSecurityContextRepository contextRepo;
-
-//    @Bean
-//    public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
-//        return http
-//                .csrf(ServerHttpSecurity.CsrfSpec::disable)
-//                .authorizeExchange(ex -> ex
-//                        .anyExchange().permitAll()
-//                )
-//                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
-//                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
-//                .build();
-//    }
-
 
 
     @Bean
     public SecurityWebFilterChain springSecurityFilterChain(ServerHttpSecurity http) {
         return http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)   // sin Basic
-                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)   // sin formulario
-                .securityContextRepository(contextRepo)                  // tu Bearer repo
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+                .securityContextRepository(contextRepo)
                 .authorizeExchange(ex -> ex
                         .pathMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Swagger completo abierto
@@ -48,8 +36,7 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/actuator/**").permitAll()
                         // Regla de lisdatod e solicitudes
-                        .pathMatchers(HttpMethod.GET, "/api/v1/solicitud/pending").permitAll()
-
+                        .pathMatchers(HttpMethod.GET, "/api/v1/solicitud/pending").hasAnyRole("ASESOR")
 
                         // Regla datos de usuario
                         .pathMatchers(HttpMethod.POST, "/api/v1/usuarios").hasAnyRole("ADMIN","ASESOR","CLIENTE")
