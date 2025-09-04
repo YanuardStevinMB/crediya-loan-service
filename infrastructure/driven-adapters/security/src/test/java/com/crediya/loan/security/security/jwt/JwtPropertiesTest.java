@@ -1,7 +1,9 @@
 package com.crediya.loan.security.security.jwt;
 
-import com.crediya.iam.security.jwt.JwtProperties;
+import com.crediya.loan.security.JwtProperties;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class JwtPropertiesTest {
 

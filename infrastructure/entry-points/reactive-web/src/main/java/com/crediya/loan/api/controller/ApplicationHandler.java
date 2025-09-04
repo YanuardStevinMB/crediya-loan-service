@@ -10,6 +10,8 @@ import com.crediya.loan.api.dto.PagedResponseDto;
 import com.crediya.loan.model.application.PendingApplicationsCriteria;
 import com.crediya.loan.usecase.generaterequest.GenerateRequestUseCase;
 import com.crediya.loan.usecase.getpendingapplications.GetPendingApplicationsUseCase;
+import com.crediya.loan.usecase.shared.Messages;
+import com.crediya.loan.usecase.shared.PagindData;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
@@ -50,17 +52,17 @@ public class ApplicationHandler {
             .map(applicationMapper::toResponseDto)
             .flatMap((ApplicationResponseDto dto) -> ServerResponse.ok()
                     .contentType(MediaType.APPLICATION_JSON)
-                    .bodyValue(ApiResponse.ok(dto, "Usuario creado correctamente", path))
+                    .bodyValue(ApiResponse.ok(dto, Messages.APPLICATION_CREATED, path))
             );
 
     }
 
     public Mono<ServerResponse> findApplications(ServerRequest request) {
-        String estado    = request.queryParam("state").orElse(null);
-        String documento = request.queryParam("document").orElse(null);
-        String email     = request.queryParam("email").orElse(null);
-        int page         = Integer.parseInt(request.queryParam("page").orElse("1"));
-        int size         = Integer.parseInt(request.queryParam("size").orElse("10"));
+        String estado    = request.queryParam(PagindData.PAGINED_STATE).orElse(null);
+        String documento = request.queryParam(PagindData.PAGINED_DOCUMENT).orElse(null);
+        String email     = request.queryParam(PagindData.PAGINED_EMAIL).orElse(null);
+        int page         = Integer.parseInt(request.queryParam(PagindData.PAGINED_PAGE).orElse(PagindData.PAGINED_PAGE_VALUE));
+        int size         = Integer.parseInt(request.queryParam(PagindData.PAGINED_SIZE).orElse(PagindData.PAGINED_SIZE_VALUE));
 
         var criteria = new PendingApplicationsCriteria(estado, documento, email, page, size);
 
@@ -74,11 +76,8 @@ public class ApplicationHandler {
                         p.totalElements(),
                         p.content().stream().map(applicationPaginedMapper::toResponseDto).toList()
                 ))
-                .flatMap(dto -> ServerResponse.ok().bodyValue(dto))
-                .onErrorResume(ex -> {
-                    log.error("[findApplications] Error al obtener aplicaciones", ex);
-                    return ServerResponse.status(500).bodyValue("Error interno al obtener aplicaciones");
-                });
+                .flatMap(dto -> ServerResponse.ok().bodyValue(dto));
+
     }
 
 

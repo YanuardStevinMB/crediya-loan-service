@@ -1,5 +1,5 @@
 package com.crediya.loan.api.dto;
-import com.crediya.loan.usecase.generaterequest.shared.Messages;
+import com.crediya.loan.usecase.shared.Messages;
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;

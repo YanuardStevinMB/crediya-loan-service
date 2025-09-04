@@ -1,7 +1,7 @@
 package com.crediya.loan.api;
 
 import com.crediya.loan.api.dto.ApplicationSaveDto;
-import com.crediya.loan.usecase.generaterequest.shared.Messages;
+import com.crediya.loan.usecase.shared.Messages;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;

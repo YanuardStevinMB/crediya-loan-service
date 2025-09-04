@@ -7,15 +7,12 @@ import com.crediya.loan.model.loantype.gateways.LoanTypeRepository;
 import com.crediya.loan.model.states.States;
 import com.crediya.loan.model.states.gateways.StatesRepository;
 import com.crediya.loan.usecase.generaterequest.generaterequest.VerifyUserUseCase;
-import com.crediya.loan.usecase.generaterequest.shared.ConfigurationException;
-import com.crediya.loan.usecase.generaterequest.shared.ValidationException;
+import com.crediya.loan.usecase.shared.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;

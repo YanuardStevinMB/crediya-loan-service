@@ -4,11 +4,11 @@ import com.crediya.loan.model.application.Application;
 import com.crediya.loan.model.application.gateways.ApplicationRepository;
 import com.crediya.loan.model.loantype.gateways.LoanTypeRepository;
 import com.crediya.loan.model.states.gateways.StatesRepository;
+import com.crediya.loan.usecase.generaterequest.generaterequest.ApplicationValidator;
 import com.crediya.loan.usecase.generaterequest.generaterequest.LoanTypeValidator;
 import com.crediya.loan.usecase.generaterequest.generaterequest.VerifyUserUseCase;
-import com.crediya.loan.usecase.generaterequest.shared.ConfigurationException;
-import com.crediya.loan.usecase.generaterequest.shared.Messages;
-import com.crediya.loan.usecase.generaterequest.ApplicationValidator;
+import com.crediya.loan.usecase.shared.ConfigurationException;
+import com.crediya.loan.usecase.shared.Messages;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 

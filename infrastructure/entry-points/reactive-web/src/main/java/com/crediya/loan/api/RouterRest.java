@@ -4,6 +4,7 @@ import com.crediya.loan.api.controller.ApplicationHandler;
 import com.crediya.loan.api.dto.ApplicationPaginedDto;
 import com.crediya.loan.api.dto.ApplicationResponseDto;
 import com.crediya.loan.api.dto.ApplicationSaveDto;
+import com.crediya.loan.usecase.shared.PagindData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -57,11 +58,11 @@ public class RouterRest {
                             operationId = "listPendingApplications",
                             summary = "Listar solicitudes paginadas",
                             parameters = {
-                                    @Parameter(name = "page", description = "Número de página (1-based)", example = "1"),
-                                    @Parameter(name = "size", description = "Tamaño de página", example = "10"),
-                                    @Parameter(name = "estado", description = "Estado de la solicitud", example = "APROBADO"),
-                                    @Parameter(name = "documento", description = "Documento del solicitante", example = "12345678"),
-                                    @Parameter(name = "email", description = "Email o búsqueda parcial", example = "gmail")
+                                    @Parameter(name = PagindData.PAGINED_PAGE, description = "Número de página (1-based)", example = "1"),
+                                    @Parameter(name = PagindData.PAGINED_SIZE, description = "Tamaño de página", example = "10"),
+                                    @Parameter(name = PagindData.PAGINED_STATE, description = "Estado de la solicitud", example = "APROBADO"),
+                                    @Parameter(name = PagindData.PAGINED_DOCUMENT, description = "Documento del solicitante", example = "12345678"),
+                                    @Parameter(name = PagindData.PAGINED_EMAIL, description = "Email o búsqueda parcial", example = "gmail")
                             },
                             responses = {
                                     @ApiResponse(
