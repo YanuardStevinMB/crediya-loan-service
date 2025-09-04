@@ -1,4 +1,4 @@
-package com.crediya.loan.config;
+package com.crediya.loan.api.config;
 
 
 import com.crediya.loan.security.JwtReactiveAuthenticationManager;

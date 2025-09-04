@@ -1,4 +1,4 @@
-package com.crediya.loan.config;
+package com.crediya.loan.api.config;
 
 import com.crediya.loan.security.JwtProperties;
 import lombok.RequiredArgsConstructor;
@@ -36,7 +36,7 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/actuator/**").permitAll()
                         // Regla de lisdatod e solicitudes
-                        .pathMatchers(HttpMethod.GET, "/api/v1/solicitud/pending").permitAll()
+                        .pathMatchers(HttpMethod.GET, "/api/v1/solicitud/pending").hasAnyRole("ADMIN","ASESOR")
 
                         // Regla datos de usuario
                         .pathMatchers(HttpMethod.POST, "/api/v1/usuarios").hasAnyRole("ADMIN","ASESOR","CLIENTE")

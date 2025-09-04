@@ -1,4 +1,4 @@
-package com.crediya.loan.config;
+package com.crediya.loan.api.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
