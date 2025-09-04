@@ -1,17 +1,25 @@
 package com.crediya.loan.model.application;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import lombok.experimental.SuperBuilder;
+import lombok.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 @Getter
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@SuperBuilder(toBuilder = true)
-public class ApplicationPagined extends Application{
-    private String stateName;
-    private String typeLoan;
+@Builder
+public class ApplicationPagined {
+
+        private Long id;
+        private BigDecimal amount;
+        private LocalDate term;
+        private String email;
+        private String identityDocument;
+        private String state;
+        private String loanType;
+        private Long stateId;
+        private Long loanTypeId;
+        private String fullName;
+        private BigDecimal baseSalary;
 }

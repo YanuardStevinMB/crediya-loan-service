@@ -4,7 +4,6 @@ import com.crediya.loan.model.application.Application;
 import com.crediya.loan.model.application.ApplicationPagined;
 import com.crediya.loan.model.application.PendingApplicationsCriteria;
 import com.crediya.loan.model.application.gateways.ApplicationRepository;
-import com.crediya.loan.model.requestsandusers.RequestsAndUsers;
 import com.crediya.loan.model.shared.Page;
 import com.crediya.loan.r2dbc.entity.ApplicationEntity;
 import com.crediya.loan.r2dbc.helper.ReactiveAdapterOperations;
@@ -14,6 +13,8 @@ import org.reactivecommons.utils.ObjectMapper;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @Slf4j
 @Repository
@@ -56,103 +57,37 @@ public class AplicationReactiveRepositoryAdapter extends ReactiveAdapterOperatio
     }
 
     @Override
-    public Mono<com.crediya.loan.model.shared.Page<ApplicationPagined>> findPending(PendingApplicationsCriteria c) {
+    public Mono<Page<ApplicationPagined>> findApplicationsPaginated(PendingApplicationsCriteria criteria) {
+        int offset = (criteria.page() - 1) * criteria.size();
 
-        // 1) FROM + JOINs (en COUNT y DATA)
-        String fromJoins = """
-        FROM solicitud s
-        INNER JOIN tipo_prestamo tp ON tp.id_tipo_prestamo = s.id_tipo_prestamo
-        INNER JOIN estados       st ON st.id_estado        = s.id_estado
-    """;
+        log.info("[findApplicationsPaginated] Ejecutando búsqueda con criterios: estado={}, documento={}, email={}, page={}, size={}, offset={}",
+                criteria.state(), criteria.document(), criteria.email(), criteria.page(), criteria.size(), offset);
 
-        // 2) WHERE con alias SIEMPRE
-        var where  = new StringBuilder(" WHERE 1=1 ");
-        var params = new java.util.LinkedHashMap<String, Object>();
+        Mono<List<ApplicationPagined>> data = repository.dataApplicationPagined(
+                        criteria.state(),
+                        criteria.document(),
+                        criteria.email(),
+                        criteria.size(),
+                        offset
+                )
+                .doOnNext(row -> log.debug("[findApplicationsPaginated] Fila obtenida: {}", row))
+                .collectList()
+                .doOnNext(list -> log.info("[findApplicationsPaginated] Se obtuvieron {} registros de la base de datos", list.size()));
 
-        // stateId: si viene en criterio, úsalo; si no, usa PENDING_STATE_ID
-        Long stateIdToUse = (c.stateId() != null) ? c.stateId() : PENDING_STATE_ID;
-        where.append(" AND s.id_estado = :stateId ");
-        params.put("stateId", stateIdToUse);
+        Mono<Long> total = repository.countApplications(
+                        criteria.state(),
+                        criteria.document(),
+                        criteria.email()
+                )
+                .doOnNext(count -> log.info("[findApplicationsPaginated] Total de registros encontrados: {}", count))
+                .map(val -> val != null ? val : 0L);
 
-        if (c.filter() != null && !c.filter().isBlank()) {
-            where.append(" AND (LOWER(s.email) LIKE :f OR s.documento_identidad LIKE :f) ");
-            params.put("f", "%" + c.filter().toLowerCase() + "%");
-        }
-        if (c.loanTypeId() != null) {
-            where.append(" AND s.id_tipo_prestamo = :loanTypeId ");
-            params.put("loanTypeId", c.loanTypeId());
-        }
-
-        // 3) SQL COUNT + DATA (mismos JOINs y WHERE)
-        String countSql = "SELECT COUNT(*) AS total " + fromJoins + where;
-
-        String dataSql  = """
-        SELECT
-            s.id_solicitud         AS id_solicitud,
-            s.monto                AS monto,
-            s.plazo                AS plazo,
-            s.email                AS email,
-            s.documento_identidad  AS documento_identidad,
-            s.id_estado            AS id_estado,
-            s.id_tipo_prestamo     AS id_tipo_prestamo,
-            tp.nombre              AS loan_type_name,
-            st.nombre              AS state_name
-    """ + fromJoins + where + " ORDER BY s.id_solicitud DESC LIMIT :limit OFFSET :offset";
-
-        // 4) Paginación
-        int page = Math.max(0, c.page());
-        int size = Math.max(1, c.size());
-        params.put("limit",  Integer.valueOf(size));
-        params.put("offset", Integer.valueOf(page * size));
-
-        // 5) COUNT (sin limit/offset)
-        var countSpec = db.sql(countSql);
-        for (var e : params.entrySet()) {
-            if ("limit".equals(e.getKey()) || "offset".equals(e.getKey())) continue;
-            countSpec = countSpec.bind(e.getKey(), e.getValue());
-        }
-        Mono<Long> total = countSpec
-                .map((row, md) -> {
-                    Long l = row.get("total", Long.class);
-                    if (l != null) return l;
-                    Integer i = row.get("total", Integer.class);
-                    if (i != null) return i.longValue();
-                    java.math.BigInteger bi = row.get("total", java.math.BigInteger.class);
-                    if (bi != null) return bi.longValue();
-                    return 0L;
-                })
-                .one();
-
-        // 6) PAGE
-        var dataSpec = db.sql(dataSql);
-        for (var e : params.entrySet()) dataSpec = dataSpec.bind(e.getKey(), e.getValue());
-
-        Mono<java.util.List<ApplicationPagined>> items = dataSpec
-                .map((row, md) -> mapRow(row))   // mapea por alias
-                .all()
-                .collectList();
-
-        return Mono.zip(total, items)
-                .map(t -> new com.crediya.loan.model.shared.Page<>(
-                        t.getT2(), t.getT1(), page, size
-                ));
+        return Mono.zip(data, total)
+                .doOnNext(tuple -> log.info("[findApplicationsPaginated] Preparando Page con {} elementos y total {}",
+                        tuple.getT1().size(), tuple.getT2()))
+                .map(tuple -> Page.of(tuple.getT1(), criteria.page(), criteria.size(), tuple.getT2()));
     }
 
-    // 7) Mapper correcto: usa los ALIAS del SELECT, no "s.columna"
-    private ApplicationPagined mapRow(io.r2dbc.spi.Row row) {
-        var e = new ApplicationPagined();
-        e.setId(row.get("id_solicitud", Long.class));
-        e.setAmount(row.get("monto", java.math.BigDecimal.class));
-        e.setTerm(row.get("plazo", java.time.LocalDate.class)); // ajusta si no es DATE
-        e.setEmail(row.get("email", String.class));
-        e.setIdentityDocument(row.get("documento_identidad", String.class));
-        e.setStateId(row.get("id_estado", Long.class));
-        e.setLoanTypeId(row.get("id_tipo_prestamo", Long.class));
-        e.setStateName(row.get("state_name", String.class));
-        // OJO: tu modelo usa 'typeLoad' (no 'typeLoan'); respeta el nombre real:
-        e.setTypeLoan(row.get("loan_type_name", String.class));
-        return e;
-    }
 
 
 

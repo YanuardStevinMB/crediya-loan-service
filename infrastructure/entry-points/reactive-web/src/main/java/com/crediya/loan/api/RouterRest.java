@@ -1,6 +1,7 @@
 package com.crediya.loan.api;
 
 import com.crediya.loan.api.controller.ApplicationHandler;
+import com.crediya.loan.api.dto.ApplicationPaginedDto;
 import com.crediya.loan.api.dto.ApplicationResponseDto;
 import com.crediya.loan.api.dto.ApplicationSaveDto;
 import io.swagger.v3.oas.annotations.Operation;
@@ -51,22 +52,22 @@ public class RouterRest {
                     path = "/api/v1/solicitud/pending",
                     method = RequestMethod.GET,
                     beanClass = ApplicationHandler.class,
-                    beanMethod = "getPendingApplications",
+                    beanMethod = "findApplications",
                     operation = @Operation(
                             operationId = "listPendingApplications",
-                            summary = "Listar solicitudes pendientes",
+                            summary = "Listar solicitudes paginadas",
                             parameters = {
-                                    @Parameter(name = "page", description = "Número de página (0-based)", example = "0"),
-                                    @Parameter(name = "size", description = "Tamaño de la página", example = "10"),
-                                    @Parameter(name = "filter", description = "Filtro por email o documento", example = "juan"),
-                                    @Parameter(name = "state", description = "Estado de la solicitud (opcional)", example = "2")
-
+                                    @Parameter(name = "page", description = "Número de página (1-based)", example = "1"),
+                                    @Parameter(name = "size", description = "Tamaño de página", example = "10"),
+                                    @Parameter(name = "estado", description = "Estado de la solicitud", example = "APROBADO"),
+                                    @Parameter(name = "documento", description = "Documento del solicitante", example = "12345678"),
+                                    @Parameter(name = "email", description = "Email o búsqueda parcial", example = "gmail")
                             },
                             responses = {
                                     @ApiResponse(
                                             responseCode = "200",
                                             description = "OK",
-                                            content = @Content(schema = @Schema(implementation = ApplicationResponseDto.class))
+                                            content = @Content(schema = @Schema(implementation = ApplicationPaginedDto.class))
                                     )
                             }
                     )
@@ -77,7 +78,7 @@ public class RouterRest {
             ApiErrorFilter errorFilter
     ) {
         return route(POST("/api/v1/solicitud"), handler::createApplication)
-                .andRoute(GET("/api/v1/solicitud/pending"), handler::getPendingApplications)
+                .andRoute(GET("/api/v1/solicitud/pending"), handler::findApplications)
                 .filter(errorFilter);
     }
 }

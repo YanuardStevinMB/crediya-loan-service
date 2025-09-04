@@ -19,11 +19,8 @@ public interface ApplicationMapper {
                 .term(dto.term())
                 .email(dto.email())
                 .identityDocument(dto.identityDocument())
-
                 .loanTypeId(dto.loanTypeId())
                 .build();
-
-
     }
 
     ApplicationResponseDto toResponseDto(Application model);

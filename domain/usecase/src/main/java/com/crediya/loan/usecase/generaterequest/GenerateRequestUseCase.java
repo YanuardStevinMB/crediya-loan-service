@@ -8,8 +8,7 @@ import com.crediya.loan.usecase.generaterequest.generaterequest.LoanTypeValidato
 import com.crediya.loan.usecase.generaterequest.generaterequest.VerifyUserUseCase;
 import com.crediya.loan.usecase.generaterequest.shared.ConfigurationException;
 import com.crediya.loan.usecase.generaterequest.shared.Messages;
-import  com.crediya.loan.usecase.generaterequest.ApplicationValidator;
-
+import com.crediya.loan.usecase.generaterequest.ApplicationValidator;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
@@ -26,43 +25,48 @@ public class GenerateRequestUseCase {
     private final LoanTypeRepository loanTypeRepository;
     private final VerifyUserUseCase verifyUserUseCase;
 
-    public Mono<Application> execute(Application a) {
+    public Mono<Application> execute(Application app) {
         return Mono.defer(() -> {
-            // Validación y normalización in-memory (sin I/O)
-            ApplicationValidator.validateAndNormalize(a);
-
+            ApplicationValidator.validateAndNormalize(app); // Validación in-memory
             LOG.fine("GenerateRequestUseCase.execute() - inicio");
 
-
-            // 🔑 Primero valida el usuario y si pasa sigue el flujo
-            return verifyUserUseCase.execute(a.getIdentityDocument(), a.getEmail())
-                    .flatMap(valid ->
-                            loanTypeRepository.findById(a.getLoanTypeId())
-                                    .switchIfEmpty(Mono.error(
-                                            new ConfigurationException(Messages.stateNotFound(Messages.LOAN_TYPE_NO_EXIST))
-                                    ))
-                                    .flatMap(loanType -> LoanTypeValidator.validateAmount(a, loanType))
-                                    // 2) Traer estado inicial
-                                    .flatMap(validApp ->
-                                            statesRepository.findByCode(DEFAULT_STATE_CODE)
-                                                    .switchIfEmpty(Mono.error(
-                                                            new ConfigurationException(Messages.stateNotFound(DEFAULT_STATE_CODE))
-                                                    ))
-                                                    // 3) Asignar estado y guardar
-                                                    .flatMap(state -> {
-                                                        a.setStateId(state.getId());
-                                                        LOG.fine(() -> "Estado inicial asignado: " + state.getCode());
-                                                        return applicationRepository.save(a)
-                                                                .doOnSuccess(saved -> LOG.info(() ->
-                                                                        "Solicitud creada id=" + saved.getId()
-                                                                                + ", state=" + state.getCode()
-                                                                ));
-                                                    })
-                                    )
-                    )
-                    .doOnError(e -> LOG.warning(() ->
-                            "GenerateRequestUseCase.execute() error: " + e.getMessage()))
+            return verifyUser(app)
+                    .then(validateLoanType(app))
+                    .then(assignInitialStateAndSave(app))
+                    .doOnError(e -> LOG.warning(() -> "Error en generate request: " + e.getMessage()))
                     .doOnSuccess(ok -> LOG.fine("GenerateRequestUseCase.execute() - éxito"));
         });
+    }
+
+    // ---------------- MÉTODOS PRIVADOS ----------------
+
+    private Mono<Boolean> verifyUser(Application app) {
+        return verifyUserUseCase.execute(app.getIdentityDocument(), app.getEmail())
+                .doOnNext(valid -> LOG.fine("Usuario verificado para documento=" + app.getIdentityDocument()));
+    }
+
+    private Mono<Application> validateLoanType(Application app) {
+        return loanTypeRepository.findById(app.getLoanTypeId())
+                .switchIfEmpty(Mono.error(
+                        new ConfigurationException(Messages.stateNotFound(Messages.LOAN_TYPE_NO_EXIST))
+                ))
+                .flatMap(loanType -> LoanTypeValidator.validateAmount(app, loanType))
+                .doOnSuccess(ok -> LOG.fine("Tipo de préstamo validado: " + app.getLoanTypeId()));
+    }
+
+    private Mono<Application> assignInitialStateAndSave(Application app) {
+        return statesRepository.findByCode(DEFAULT_STATE_CODE)
+                .switchIfEmpty(Mono.error(
+                        new ConfigurationException(Messages.stateNotFound(DEFAULT_STATE_CODE))
+                ))
+                .flatMap(state -> {
+                    app.setStateId(state.getId());
+                    LOG.fine(() -> "Estado inicial asignado: " + state.getCode());
+                    return applicationRepository.save(app)
+                            .doOnSuccess(saved -> LOG.info(() ->
+                                    "Solicitud creada id=" + saved.getId()
+                                            + ", state=" + state.getCode()
+                            ));
+                });
     }
 }

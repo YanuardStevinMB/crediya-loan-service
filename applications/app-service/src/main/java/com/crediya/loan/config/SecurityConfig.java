@@ -36,7 +36,7 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/actuator/**").permitAll()
                         // Regla de lisdatod e solicitudes
-                        .pathMatchers(HttpMethod.GET, "/api/v1/solicitud/pending").hasAnyRole("ASESOR")
+                        .pathMatchers(HttpMethod.GET, "/api/v1/solicitud/pending").permitAll()
 
                         // Regla datos de usuario
                         .pathMatchers(HttpMethod.POST, "/api/v1/usuarios").hasAnyRole("ADMIN","ASESOR","CLIENTE")
