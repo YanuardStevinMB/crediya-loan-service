@@ -58,11 +58,11 @@ public class RouterRest {
                             operationId = "listPendingApplications",
                             summary = "Listar solicitudes paginadas",
                             parameters = {
-                                    @Parameter(name = PagindData.PAGINED_PAGE, description = "Número de página (1-based)", example = "1"),
-                                    @Parameter(name = PagindData.PAGINED_SIZE, description = "Tamaño de página", example = "10"),
-                                    @Parameter(name = PagindData.PAGINED_STATE, description = "Estado de la solicitud", example = "APROBADO"),
-                                    @Parameter(name = PagindData.PAGINED_DOCUMENT, description = "Documento del solicitante", example = "12345678"),
-                                    @Parameter(name = PagindData.PAGINED_EMAIL, description = "Email o búsqueda parcial", example = "gmail")
+                                    @Parameter(name = "page", description = "Número de página (1-based)", example = "1"),
+                                    @Parameter(name = "size", description = "Tamaño de página", example = "10"),
+                                    @Parameter(name = "state", description = "Estado de la solicitud", example = "APROBADO"),
+                                    @Parameter(name = "document", description = "Documento del solicitante", example = "12345678"),
+                                    @Parameter(name = "email", description = "Email o búsqueda parcial", example = "gmail")
                             },
                             responses = {
                                     @ApiResponse(
