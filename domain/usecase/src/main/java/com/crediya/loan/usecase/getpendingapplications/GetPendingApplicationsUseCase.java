@@ -10,38 +10,54 @@ import com.crediya.loan.usecase.generaterequest.gateway.UserManagementGateway;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
+import java.util.Optional;
 import java.util.logging.Logger;
 
 @RequiredArgsConstructor
 public class GetPendingApplicationsUseCase {
 
     private static final Logger LOG = Logger.getLogger(GetPendingApplicationsUseCase.class.getName());
-
     private final ApplicationRepository repo;
     private final UserManagementGateway gateway;
-
-//    public Mono<Page<ApplicationPagined>> execute(PendingApplicationsCriteria c) {
-//
-//        return loadUsersAsMap()
-//                .flatMap(usersMap ->
-//                        repo.findApplicationsPaginated()=fetchApplications(normalized)
-//                        .map(page -> enrichPageWithUsers(page, usersMap)));
-//    }
-
-    // ---------------- MÉTODOS PRIVADOS ----------------
+    private final List<User> usersCache = new ArrayList<>();
 
     public Mono<Page<ApplicationPagined>> execute(PendingApplicationsCriteria criteria) {
-        return repo.findApplicationsPaginated(criteria);
+        return loadUsersAsList()
+                .then(repo.findApplicationsPaginated(criteria))
+                .map(page -> {
+                    page.content().forEach(this::enrichWithUserData);
+                    return page;
+                });
     }
 
-    private Mono<Map<String, User>> loadUsersAsMap() {
+    /** Carga usuarios y los guarda en la lista temporal (siempre que se invoque el paginador). */
+    private Mono<List<User>> loadUsersAsList() {
         return gateway.loadUsers()
-                .collectMap(User::getIdentityDocument, Function.identity())
-                .doOnNext(map -> LOG.info(() -> "[loadUsersAsMap] Usuarios cargados: " + map.size()));
+                .collectList()
+                .doOnNext(list -> {
+                    usersCache.clear();
+                    usersCache.addAll(list);
+                    LOG.info(() -> "[loadUsersAsList] Usuarios cargados: " + usersCache.size());
+                });
     }
 
+    /** Completa ApplicationPagined con datos de usuario (fullName, baseSalary). */
+    private ApplicationPagined enrichWithUserData(ApplicationPagined app) {
+        if (app.getIdentityDocument() == null) return app;
 
+        usersCache.stream()
+                .filter(u -> app.getIdentityDocument().trim()
+                        .equals(u.getIdentityDocument() != null ? u.getIdentityDocument().trim() : null))
+                .findFirst()
+                .ifPresent(u -> {
+                    String fullName = Optional.ofNullable(u.getFirstName()).orElse("") +
+                            " " +
+                            Optional.ofNullable(u.getLastName()).orElse("");
+                    app.setFullName(fullName.trim());
+                    app.setBaseSalary(u.getBaseSalary());
+                });
+        return app;
+    }
 }

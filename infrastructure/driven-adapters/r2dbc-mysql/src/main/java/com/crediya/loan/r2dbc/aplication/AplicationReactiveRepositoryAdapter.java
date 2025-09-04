@@ -72,7 +72,10 @@ public class AplicationReactiveRepositoryAdapter extends ReactiveAdapterOperatio
                 )
                 .doOnNext(row -> log.debug("[findApplicationsPaginated] Fila obtenida: {}", row))
                 .collectList()
-                .doOnNext(list -> log.info("[findApplicationsPaginated] Se obtuvieron {} registros de la base de datos", list.size()));
+                .doOnNext(list -> {
+                    log.info("[findApplicationsPaginated] Se obtuvieron {} registros de la base de datos", list.size());
+                    list.forEach(app -> log.info("➡ Registro completo: {}", app));
+                });
 
         Mono<Long> total = repository.countApplications(
                         criteria.state(),
@@ -87,8 +90,6 @@ public class AplicationReactiveRepositoryAdapter extends ReactiveAdapterOperatio
                         tuple.getT1().size(), tuple.getT2()))
                 .map(tuple -> Page.of(tuple.getT1(), criteria.page(), criteria.size(), tuple.getT2()));
     }
-
-
 
 
 }

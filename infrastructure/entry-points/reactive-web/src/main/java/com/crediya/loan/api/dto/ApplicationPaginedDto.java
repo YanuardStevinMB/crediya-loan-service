@@ -9,10 +9,10 @@ public record ApplicationPaginedDto (
     LocalDate term,
     String email,
     String identityDocument,
-    String state,
-    String loanType,
+   String state,
+    String loan,
     Long stateId,
     Long loanTypeId,
-    String fullName,
+   String fullName,
     BigDecimal baseSalary
 ){}

@@ -9,6 +9,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ToString
 public class ApplicationPagined {
 
         private Long id;
@@ -17,9 +18,10 @@ public class ApplicationPagined {
         private String email;
         private String identityDocument;
         private String state;
-        private String loanType;
+        private String loan;
         private Long stateId;
         private Long loanTypeId;
-        private String fullName;
-        private BigDecimal baseSalary;
+    private String fullName;
+    private BigDecimal baseSalary;
+
 }

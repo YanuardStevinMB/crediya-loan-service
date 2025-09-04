@@ -9,5 +9,5 @@ import org.mapstruct.ReportingPolicy;
         unmappedTargetPolicy = ReportingPolicy.ERROR
 )
 public interface ApplicationPaginedMapper {
-    ApplicationPaginedDto toResponseDto(ApplicationPagined model);
+   ApplicationPaginedDto toResponseDto(ApplicationPagined model);
 }
