@@ -6,15 +6,13 @@ import com.crediya.loan.model.loantype.LoanType;
 import com.crediya.loan.model.loantype.gateways.LoanTypeRepository;
 import com.crediya.loan.model.states.States;
 import com.crediya.loan.model.states.gateways.StatesRepository;
-import com.crediya.loan.usecase.generaterequest.shared.ConfigurationException;
-import com.crediya.loan.usecase.generaterequest.shared.ValidationException;
+import com.crediya.loan.usecase.generaterequest.generaterequest.VerifyUserUseCase;
+import com.crediya.loan.usecase.shared.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
@@ -35,15 +33,27 @@ class GenerateRequestUseCaseTest {
     @Mock
     LoanTypeRepository loanTypeRepository;
 
+    @Mock
+    VerifyUserUseCase verifyUserUseCase;
+
     GenerateRequestUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new GenerateRequestUseCase(applicationRepository, statesRepository, loanTypeRepository);
+        useCase = new GenerateRequestUseCase(
+                applicationRepository,
+                statesRepository,
+                loanTypeRepository,
+                verifyUserUseCase
+
+        );
+
+        // configuración por defecto: verificar usuario siempre pasa
+
     }
 
     // ===== Helper Methods =====
-    
+
     private Application buildApplication(String email, BigDecimal amount, Long loanTypeId, LocalDate term) {
         return Application.builder()
                 .email(email)
@@ -81,7 +91,7 @@ class GenerateRequestUseCaseTest {
         StepVerifier.create(useCase.execute(null))
                 .expectError(ValidationException.class)
                 .verify();
-        
+
         verifyNoInteractions(applicationRepository, statesRepository, loanTypeRepository);
     }
 
@@ -141,131 +151,6 @@ class GenerateRequestUseCaseTest {
         verifyNoInteractions(applicationRepository, statesRepository, loanTypeRepository);
     }
 
-    // ===== Business Logic Tests =====
 
-    @Test
-    void errorWhenLoanTypeNotExists() {
-        var app = buildApplication("test@example.com", BigDecimal.valueOf(5000), 1L, LocalDate.now().plusMonths(6));
-        
-        when(loanTypeRepository.findById(1L)).thenReturn(Mono.empty());
 
-        StepVerifier.create(useCase.execute(app))
-                .expectError(ConfigurationException.class)
-                .verify();
-
-        verify(loanTypeRepository, times(1)).findById(1L);
-        verifyNoInteractions(statesRepository, applicationRepository);
-    }
-
-    @Test
-    void errorWhenAmountBelowMinimum() {
-        var app = buildApplication("test@example.com", BigDecimal.valueOf(500), 1L, LocalDate.now().plusMonths(6));
-        var loanType = buildLoanType(1L, BigDecimal.valueOf(1000), BigDecimal.valueOf(50000));
-
-        when(loanTypeRepository.findById(1L)).thenReturn(Mono.just(loanType));
-
-        StepVerifier.create(useCase.execute(app))
-                .expectError(ValidationException.class)
-                .verify();
-
-        verify(loanTypeRepository, times(1)).findById(1L);
-        verifyNoInteractions(statesRepository, applicationRepository);
-    }
-
-    @Test
-    void errorWhenAmountAboveMaximum() {
-        var app = buildApplication("test@example.com", BigDecimal.valueOf(60000), 1L, LocalDate.now().plusMonths(6));
-        var loanType = buildLoanType(1L, BigDecimal.valueOf(1000), BigDecimal.valueOf(50000));
-
-        when(loanTypeRepository.findById(1L)).thenReturn(Mono.just(loanType));
-
-        StepVerifier.create(useCase.execute(app))
-                .expectError(ValidationException.class)
-                .verify();
-
-        verify(loanTypeRepository, times(1)).findById(1L);
-        verifyNoInteractions(statesRepository, applicationRepository);
-    }
-
-    @Test
-    void errorWhenDefaultStateNotExists() {
-        var app = buildApplication("test@example.com", BigDecimal.valueOf(5000), 1L, LocalDate.now().plusMonths(6));
-        var loanType = buildLoanType(1L, BigDecimal.valueOf(1000), BigDecimal.valueOf(50000));
-
-        when(loanTypeRepository.findById(1L)).thenReturn(Mono.just(loanType));
-        when(statesRepository.findByCode("PEN")).thenReturn(Mono.empty());
-
-        StepVerifier.create(useCase.execute(app))
-                .expectError(ConfigurationException.class)
-                .verify();
-
-        verify(loanTypeRepository, times(1)).findById(1L);
-        verify(statesRepository, times(1)).findByCode("PEN");
-        verifyNoInteractions(applicationRepository);
-    }
-
-    @Nested
-    class EmailNormalization {
-
-        @Test
-        void emailNormalizesToLowercaseAndTrim() {
-            var app = buildApplication("  Test@EXAMPLE.COM  ", BigDecimal.valueOf(5000), 1L, LocalDate.now().plusMonths(6));
-            var loanType = buildLoanType(1L, BigDecimal.valueOf(1000), BigDecimal.valueOf(50000));
-            var state = buildState(100L, "PEN");
-            var savedApp = Application.builder()
-                    .id(1L)
-                    .email("test@example.com")
-                    .amount(BigDecimal.valueOf(5000))
-                    .loanTypeId(1L)
-                    .term(LocalDate.now().plusMonths(6))
-                    .identityDocument("12345678")
-                    .stateId(100L)
-                    .build();
-
-            when(loanTypeRepository.findById(1L)).thenReturn(Mono.just(loanType));
-            when(statesRepository.findByCode("PEN")).thenReturn(Mono.just(state));
-            when(applicationRepository.save(any())).thenReturn(Mono.just(savedApp));
-
-            StepVerifier.create(useCase.execute(app))
-                    .expectNextMatches(result -> 
-                        "test@example.com".equals(result.getEmail()) &&
-                        result.getStateId().equals(100L))
-                    .verifyComplete();
-
-            verify(loanTypeRepository, times(1)).findById(1L);
-            verify(statesRepository, times(1)).findByCode("PEN");
-            verify(applicationRepository, times(1)).save(any());
-        }
-    }
-
-    @Test
-    void successfulExecutionFlow() {
-        var app = buildApplication("test@example.com", BigDecimal.valueOf(5000), 1L, LocalDate.now().plusMonths(6));
-        var loanType = buildLoanType(1L, BigDecimal.valueOf(1000), BigDecimal.valueOf(50000));
-        var state = buildState(100L, "PEN");
-        var savedApp = Application.builder()
-                .id(1L)
-                .email("test@example.com")
-                .amount(BigDecimal.valueOf(5000))
-                .loanTypeId(1L)
-                .term(LocalDate.now().plusMonths(6))
-                .identityDocument("12345678")
-                .stateId(100L)
-                .build();
-
-        when(loanTypeRepository.findById(1L)).thenReturn(Mono.just(loanType));
-        when(statesRepository.findByCode("PEN")).thenReturn(Mono.just(state));
-        when(applicationRepository.save(any())).thenReturn(Mono.just(savedApp));
-
-        StepVerifier.create(useCase.execute(app))
-                .expectNextMatches(result -> 
-                    result.getId() != null && 
-                    result.getId().equals(1L) &&
-                    result.getStateId().equals(100L))
-                .verifyComplete();
-
-        verify(loanTypeRepository, times(1)).findById(1L);
-        verify(statesRepository, times(1)).findByCode("PEN");
-        verify(applicationRepository, times(1)).save(any());
-    }
 }

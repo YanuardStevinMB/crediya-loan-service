@@ -2,8 +2,8 @@ package com.crediya.loan.usecase.generaterequest.generaterequest;
 
 import com.crediya.loan.model.application.Application;
 import com.crediya.loan.model.loantype.LoanType;
-import com.crediya.loan.usecase.generaterequest.shared.Messages;
-import com.crediya.loan.usecase.generaterequest.shared.ValidationException;
+import com.crediya.loan.usecase.shared.Messages;
+import com.crediya.loan.usecase.shared.ValidationException;
 import reactor.core.publisher.Mono;
 
 

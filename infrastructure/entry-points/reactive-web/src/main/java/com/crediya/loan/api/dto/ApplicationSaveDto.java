@@ -1,8 +1,6 @@
 package com.crediya.loan.api.dto;
-
-import com.crediya.loan.usecase.generaterequest.shared.Messages;
+import com.crediya.loan.usecase.shared.Messages;
 import jakarta.validation.constraints.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -19,7 +17,6 @@ public record ApplicationSaveDto(
         @NotBlank(message =  Messages.EMAIL_REQUIRED )
         @Email
         String email,
-
 
         @NotBlank(message = Messages.DOC_REQUIRED)
         @Pattern(regexp = "^[0-9]+$", message = Messages.DOC_NUMERIC)

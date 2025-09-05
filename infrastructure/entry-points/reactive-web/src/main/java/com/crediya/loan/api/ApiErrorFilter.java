@@ -1,6 +1,6 @@
 package com.crediya.loan.api;
 
-import com.crediya.loan.usecase.generaterequest.shared.ValidationException;
+import com.crediya.loan.usecase.shared.ValidationException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;

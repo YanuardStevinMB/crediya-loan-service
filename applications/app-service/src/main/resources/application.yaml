@@ -3,17 +3,14 @@ server:
 spring:
   security:
     user:
-      name: admin
-      password: admin123
-
+      name: "admin"
+      password: "admin123"
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:local}
+    active: "${SPRING_PROFILES_ACTIVE:local}"
   application:
     name: "autenticacion"
   devtools:
     add-properties: false
-
-
 management:
   endpoints:
     web:
@@ -23,23 +20,27 @@ management:
     health:
       probes:
         enabled: true
+  health:
+    circuitbreakers:
+      enabled: true
 cors:
   allowed-origins: "http://localhost:4200,http://localhost:8080"
-
 springdoc:
-  api-docs.path: /v3/api-docs
-  swagger-ui.path: /swagger-ui
-  swagger-ui.operationsSorter: method
-  swagger-ui.tagsSorter: alpha
-
+  api-docs.path: "/v3/api-docs"
+  swagger-ui.path: "/swagger-ui"
+  swagger-ui.operationsSorter: "method"
+  swagger-ui.tagsSorter: "alpha"
 logging:
   file:
-    name: logs/iam-app.log    # crea (y sobreescribe al arrancar) logs/iam-app.log
+    name: "logs/iam-app.log"
   level:
-    root: INFO
-    com.crediya.iam: INFO
-    io.r2dbc.mysql: WARN
-    org.springframework.r2dbc: INFO
+    root: "INFO"
+    com.crediya.iam: "INFO"
+    io.r2dbc.mysql: "WARN"
+    org.springframework.r2dbc: "INFO"
+    org.springframework.web.reactive.function.client.ExchangeFunctions: DEBUG
+    org.springframework.http.client.reactive: DEBUG
+
 
 adapters:
   r2dbc:
@@ -48,3 +49,37 @@ adapters:
     database: "crediya_loan"
     username: "root"
     password: "rootpassword"
+
+adapter:
+  restconsumer:
+    url: "http://localhost:8081"   # ✅ solo host y puerto
+    timeout: 5000
+
+
+security:
+  secret: "QnE1T2lXbVRhV3RzR2VOUXlHaFZ2d2dyU2p2a1R2TnM="
+  expiration-sec: 3600
+  issuer: "autenticacion-service"
+  issuer-uri: ""
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      testGet:
+        registerHealthIndicator: true
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: "2s"
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: "10s"
+      testPost:
+        registerHealthIndicator: true
+        failureRateThreshold: 50
+        slowCallRateThreshold: 50
+        slowCallDurationThreshold: "2s"
+        permittedNumberOfCallsInHalfOpenState: 3
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        waitDurationInOpenState: "10s"

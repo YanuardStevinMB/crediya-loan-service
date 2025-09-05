@@ -1,4 +1,4 @@
-package com.crediya.loan.usecase.generaterequest.shared;
+package com.crediya.loan.usecase.shared;
 
 import java.math.BigDecimal;
 
@@ -8,9 +8,7 @@ public final class Messages {
     public static final String DOC_REQUIRED        = "El documento de identidad es obligatorio";
     public static final String EMAIL_REQUIRED      = "El correo electrónico es obligatorio";
     public static final String AMOUNT_INVALID      = "El correo electrónico es obligatorio";
-
     public static final String EMAIL_INVALID       = "Correo electrónico inválido";
-
     public static final String AMOUNT_REQUIRED     = "El monto es obligatorio";
     public static final String AMOUNT_DECIMALS     = "El monto no debe tener más de 2 decimales";
     public static final String AMOUNT_RANGE        = "El monto debe estar en (0, 15000000]";
@@ -18,13 +16,23 @@ public final class Messages {
     public static final String TERM_POSITIVE       = "El plazo en meses debe ser mayor a 0";
     public static final String LOAN_TYPE_REQUIRED  = "El tipo de préstamo es obligatorio";
     public static final String LOAN_TYPE_NO_EXIST  = "El tipo de préstamo no existe ";
-
     public static final String DOC_NUMERIC  = "El documento solo puede tener dígitos (0-9)";
     public static final String DOC_LENGTH   = "El documento debe tener entre 6 y 20 dígitos";
 
+    //restconsumer
+    public static final String DATA_USER_NOT_EXIST   = "Los datos ingresados del usuario no son los que están en el sistema.";
+
+    // solicitud
+    public static final String APPLICATION_CREATED   = "Solicitud creada satisfactoriamente";
+
+    //validated User
+    public static final String USER_INVALID =
+            "Los datos ingresados no corresponden a un usuario registrado en el sistema. " +
+                    "Por favor, intenta nuevamente o ponte en contacto con un administrador.";
+
+
     public static String amountNotAllowed(BigDecimal amountMin, BigDecimal amountMax) {
-        return
-        "El monto debe estar entre " + amountMin + " y " + amountMax +" ";
+        return"El monto debe estar entre " + amountMin + " y " + amountMax +" ";
     }
 
     public static String stateNotFound(String code){ return "El estado inicial '" + code + "' no existe"; }

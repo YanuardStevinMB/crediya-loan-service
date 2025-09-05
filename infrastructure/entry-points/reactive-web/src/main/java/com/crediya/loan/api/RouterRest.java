@@ -1,14 +1,16 @@
 package com.crediya.loan.api;
 
+import com.crediya.loan.api.controller.ApplicationHandler;
+import com.crediya.loan.api.dto.ApplicationPaginedDto;
 import com.crediya.loan.api.dto.ApplicationResponseDto;
 import com.crediya.loan.api.dto.ApplicationSaveDto;
-import  com.crediya.loan.api.ApiErrorResponse;
-
+import com.crediya.loan.usecase.shared.PagindData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.parameters.RequestBody; // ✅ correcto
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.Parameter;
 import org.springdoc.core.annotations.RouterOperation;
 import org.springdoc.core.annotations.RouterOperations;
 import org.springframework.context.annotation.Bean;
@@ -17,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
+import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
 import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
@@ -42,16 +45,30 @@ public class RouterRest {
                                             responseCode = "200",
                                             description = "OK",
                                             content = @Content(schema = @Schema(implementation = ApplicationResponseDto.class))
-                                    ),
+                                    )
+                            }
+                    )
+            ),
+            @RouterOperation(
+                    path = "/api/v1/solicitud/pending",
+                    method = RequestMethod.GET,
+                    beanClass = ApplicationHandler.class,
+                    beanMethod = "findApplications",
+                    operation = @Operation(
+                            operationId = "listPendingApplications",
+                            summary = "Listar solicitudes paginadas",
+                            parameters = {
+                                    @Parameter(name = "page", description = "Número de página (1-based)", example = "1"),
+                                    @Parameter(name = "size", description = "Tamaño de página", example = "10"),
+                                    @Parameter(name = "state", description = "Estado de la solicitud", example = "APROBADO"),
+                                    @Parameter(name = "document", description = "Documento del solicitante", example = "12345678"),
+                                    @Parameter(name = "email", description = "Email o búsqueda parcial", example = "gmail")
+                            },
+                            responses = {
                                     @ApiResponse(
-                                            responseCode = "400",
-                                            description = "Error de validación",
-                                            content = @Content(schema = @Schema(implementation = ApiErrorResponse.class))
-                                    ),
-                                    @ApiResponse(
-                                            responseCode = "500",
-                                            description = "Error interno",
-                                            content = @Content(schema = @Schema(implementation = com.crediya.loan.api.ApiErrorResponse.class))
+                                            responseCode = "200",
+                                            description = "OK",
+                                            content = @Content(schema = @Schema(implementation = ApplicationPaginedDto.class))
                                     )
                             }
                     )
@@ -62,6 +79,7 @@ public class RouterRest {
             ApiErrorFilter errorFilter
     ) {
         return route(POST("/api/v1/solicitud"), handler::createApplication)
+                .andRoute(GET("/api/v1/solicitud/pending"), handler::findApplications)
                 .filter(errorFilter);
     }
 }

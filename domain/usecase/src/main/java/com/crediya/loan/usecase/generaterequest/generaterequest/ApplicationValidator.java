@@ -1,8 +1,8 @@
-package com.crediya.loan.usecase.generaterequest;
+package com.crediya.loan.usecase.generaterequest.generaterequest;
 
 import com.crediya.loan.model.application.Application;
-import com.crediya.loan.usecase.generaterequest.shared.Messages;
-import com.crediya.loan.usecase.generaterequest.shared.ValidationException;
+import com.crediya.loan.usecase.shared.Messages;
+import com.crediya.loan.usecase.shared.ValidationException;
 
 
 import java.math.BigDecimal;
@@ -10,7 +10,7 @@ import java.time.LocalDate;
 import java.util.Locale;
 import java.util.regex.Pattern;
 
-final class ApplicationValidator {
+public final class ApplicationValidator {
     private ApplicationValidator() {}
 
     private static final BigDecimal MIN_AMOUNT = new BigDecimal("0");
@@ -18,7 +18,7 @@ final class ApplicationValidator {
     private static final Pattern EMAIL_RE = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$");
 
     /** Valida y normaliza campos en memoria. Lanza ValidationException (runtime) si falla. */
-    static void validateAndNormalize(Application a) {
+    public static void validateAndNormalize(Application a) {
         if (a == null) throw new ValidationException(null, Messages.REQ_BODY_REQUIRED);
 
         // Documento

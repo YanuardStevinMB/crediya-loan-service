@@ -1,4 +1,4 @@
-package com.crediya.loan.usecase.generaterequest.shared;
+package com.crediya.loan.usecase.shared;
 
 
 public class ConfigurationException extends RuntimeException {
