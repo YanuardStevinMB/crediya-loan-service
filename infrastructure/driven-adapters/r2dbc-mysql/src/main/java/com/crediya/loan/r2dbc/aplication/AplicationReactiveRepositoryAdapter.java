@@ -63,12 +63,7 @@ public class AplicationReactiveRepositoryAdapter extends ReactiveAdapterOperatio
         log.info("[findApplicationsPaginated] Ejecutando búsqueda con criterios: estado={}, documento={}, email={}, page={}, size={}, offset={}",
                 criteria.state(), criteria.document(), criteria.email(), criteria.page(), criteria.size(), offset);
 
-        Mono<List<ApplicationPagined>> data = repository.dataApplicationPagined(
-                        criteria.state(),
-                        criteria.document(),
-                        criteria.email(),
-                        criteria.size(),
-                        offset
+        Mono<List<ApplicationPagined>> data = repository.dataApplicationPagined(criteria.state(),criteria.document(),criteria.email(),criteria.size(),offset
                 )
                 .doOnNext(row -> log.debug("[findApplicationsPaginated] Fila obtenida: {}", row))
                 .collectList()
@@ -77,11 +72,7 @@ public class AplicationReactiveRepositoryAdapter extends ReactiveAdapterOperatio
                     list.forEach(app -> log.info("➡ Registro completo: {}", app));
                 });
 
-        Mono<Long> total = repository.countApplications(
-                        criteria.state(),
-                        criteria.document(),
-                        criteria.email()
-                )
+        Mono<Long> total = repository.countApplications(criteria.state(), criteria.document(),criteria.email())
                 .doOnNext(count -> log.info("[findApplicationsPaginated] Total de registros encontrados: {}", count))
                 .map(val -> val != null ? val : 0L);
 

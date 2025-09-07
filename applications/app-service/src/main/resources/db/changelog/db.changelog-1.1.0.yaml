@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: 2025-09-7-seed-tipo_prestamo_and_estado
+      author: yanuard
+      changes:
+        - sql:
+            comment: Seed de estados y tipo de prestamos por defecto si no existen (MySQL)
+            splitStatements: true
+            sql: |
+              INSERT IGNORE INTO estados (id_estado,nombre,descripcion,codigo) VALUES
+              (1,'PENDIENTE','Solicitud recibida y en revisión','PEN'),
+              (2,'APROBADA','Aprobada por validaciones/motor de riesgo','APROB'),
+              (3,'RECHAZADA','Rechazada por validaciones','RECH'),
+              (4,'EN_ESTUDIO','En estudio manual por analista','ESTU');
+    
+              INSERT IGNORE INTO tipo_prestamo
+                (id_tipo_prestamo,nombre,monto_minimo,monto_maximo,tasa_interes,validacion_automatica) VALUES
+              (1,'Libre Inversión',500000,50000000,1.80,1),
+              (2,'Educativo',300000,30000000,1.20,1),
+              (3,'Vehículo',2000000,120000000,1.50,0),
+              (4,'Microcrédito',200000,20000000,2.20,1);

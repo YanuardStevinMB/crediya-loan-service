@@ -48,10 +48,10 @@ public interface AplicationReactiveRepository  extends ReactiveCrudRepository<Ap
 
     @Query("""
     SELECT COUNT(*) 
-    FROM crediya_loan.solicitud s
-    INNER JOIN crediya_loan.tipo_prestamo tp 
+    FROM solicitud s
+    INNER JOIN tipo_prestamo tp 
         ON s.id_tipo_prestamo = tp.id_tipo_prestamo
-    INNER JOIN crediya_loan.estados e 
+    INNER JOIN estados e 
         ON s.id_estado = e.id_estado
     WHERE 
         (:estado IS NULL OR e.nombre = :estado)

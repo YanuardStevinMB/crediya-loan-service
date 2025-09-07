@@ -1,0 +1,104 @@
+# compose-loan.yml
+# Comunica loan-service con iam-service usando la red externa "crediya-network".
+# Asegúrate de crearla antes:  docker network create crediya-network || true
+
+services:
+  mysql-loan:
+    image: mysql:8.0
+    container_name: crediya-mysql-loan
+    restart: unless-stopped
+    command:
+      - --default-authentication-plugin=mysql_native_password
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --innodb-buffer-pool-size=256M
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_secure_password_2024}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-crediya_loan}
+      MYSQL_USER: ${MYSQL_USER:-loan}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-loan_secure_2024}
+      TZ: UTC
+    volumes:
+      - mysql-loan-data:/var/lib/mysql
+    # Evita colisiones de puertos con otros MySQL en el host
+    ports:
+      - "${MYSQL_LOAN_PORT:-3308}:3306"
+    networks:
+      - crediya-network
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -p$${MYSQL_ROOT_PASSWORD} -h 127.0.0.1 --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  loan-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crediya-loan-service
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8080
+
+      # R2DBC runtime hacia mysql-loan (en la misma red)
+      ADAPTERS_R2DBC_HOST: mysql-loan
+      ADAPTERS_R2DBC_PORT: 3306
+      ADAPTERS_R2DBC_DATABASE: ${MYSQL_DATABASE:-crediya_loan}
+      ADAPTERS_R2DBC_USERNAME: ${MYSQL_USER:-loan}
+      ADAPTERS_R2DBC_PASSWORD: ${MYSQL_PASSWORD:-loan_secure_2024}
+
+      # CORS / Seguridad / Actuator
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200,http://localhost}
+      SECURITY_JWT_SECRET: ${JWT_SECRET:-change_me}
+      SECURITY_JWT_EXPIRATION_SEC: ${JWT_EXPIRATION:-3600}
+      JWT_ISSUER: ${JWT_ISSUER:-crediya}
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info
+      MANAGEMENT_ENDPOINT_HEALTH_PROBES_ENABLED: "true"
+
+      # JVM
+      JAVA_OPTS: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
+
+      # REST consumer apuntando al IAM por DNS dentro de la red compartida
+      ADAPTER_RESTCONSUMER_URL: http://iam-service:8080
+
+    depends_on:
+      mysql-loan:
+        condition: service_healthy
+    ports:
+      - "${LOAN_SERVICE_PORT:-8083}:8080"
+    networks:
+      - crediya-network
+    volumes:
+      - ./logs:/app/logs
+    # Healthcheck que verifica el propio servicio y la disponibilidad del IAM
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/actuator/health >/dev/null && curl -fsS http://iam-service:8080/actuator/health >/dev/null || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  adminer:
+    image: adminer:4.8.1
+    container_name: crediya-adminer-loan
+    restart: unless-stopped
+    environment:
+      ADMINER_DEFAULT_SERVER: mysql-loan
+      ADMINER_DESIGN: pepa-linha-dark
+    ports:
+      - "${ADMINER_PORT:-8082}:8080"
+    networks:
+      - crediya-network
+    depends_on:
+      - mysql-loan
+
+volumes:
+  mysql-loan-data:
+    driver: local
+
+networks:
+  crediya-network:
+    external: true
+    name: crediya-network

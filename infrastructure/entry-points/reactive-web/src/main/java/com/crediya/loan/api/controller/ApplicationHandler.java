@@ -58,7 +58,7 @@ public class ApplicationHandler {
     }
 
     public Mono<ServerResponse> findApplications(ServerRequest request) {
-        String estado    = request.queryParam(PagindData.PAGINED_STATE).orElse(null);
+        String estado    = request.queryParam(PagindData.PAGINED_STATE ).orElse(null);
         String documento = request.queryParam(PagindData.PAGINED_DOCUMENT).orElse(null);
         String email     = request.queryParam(PagindData.PAGINED_EMAIL).orElse(null);
         int page         = Integer.parseInt(request.queryParam(PagindData.PAGINED_PAGE).orElse(PagindData.PAGINED_PAGE_VALUE));
