@@ -1,12 +1,13 @@
 server:
   port: 8080
 spring:
-  profiles:
-    active: "${SPRING_PROFILES_ACTIVE:local}"
+#  profiles:
+#    active: "${SPRING_PROFILES_ACTIVE:local}"
   application:
     name: "solicitudes"
   devtools:
     add-properties: false
+
   liquibase:
     enabled: true
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -49,11 +50,11 @@ logging:
 
 adapters:
   r2dbc:
-    host: "localhost"
-    port: 3306
-    database: "crediya_loan"
-    username: "root"
-    password: "rootpassword"
+    host: 127.0.0.1
+    port: 3308
+    database: crediya_solicitudes
+    username: solicitudes
+    password: solicitudes_secure_2025
 
 adapter:
   restconsumer:

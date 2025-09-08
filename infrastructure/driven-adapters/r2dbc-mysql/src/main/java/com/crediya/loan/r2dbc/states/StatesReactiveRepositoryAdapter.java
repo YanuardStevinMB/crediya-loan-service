@@ -28,11 +28,14 @@ public class  StatesReactiveRepositoryAdapter extends ReactiveAdapterOperations<
         this.repository = repository;
     }
 
-
-
     @Override
     public Mono<States> findByCode(String code) {
         return  repository.findByCode(code)
+                .map(entity -> mapper.map(entity, States.class));
+    }
+    @Override
+    public Mono<States> findById(Long id) {
+        return repository.findByIdCustom(id)
                 .map(entity -> mapper.map(entity, States.class));
     }
 }

@@ -35,11 +35,13 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/webjars/**",
                                 "/actuator/**").permitAll()
+                        .pathMatchers(HttpMethod.PUT, "/api/v1/application/update-state").permitAll()
+
                         // Regla de lisdatod e solicitudes
-                        .pathMatchers(HttpMethod.GET, "/api/v1/solicitud/pending").hasAnyRole("ADMIN","ASESOR")
+                        .pathMatchers(HttpMethod.GET, "/api/v1/application/pending").hasAnyRole("ADMIN","ASESOR")
 
                         // Regla datos de usuario
-                        .pathMatchers(HttpMethod.POST, "/api/v1/solicitud").hasAnyRole("ADMIN","ASESOR","CLIENTE")
+                        .pathMatchers(HttpMethod.POST, "/api/v1/application").hasAnyRole("ADMIN","ASESOR","CLIENTE")
 
                         //.hasAnyRole("CLIENTE")
                         // Resto autenticado

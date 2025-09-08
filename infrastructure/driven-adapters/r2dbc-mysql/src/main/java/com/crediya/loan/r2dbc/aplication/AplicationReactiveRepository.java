@@ -2,6 +2,7 @@ package com.crediya.loan.r2dbc.aplication;
 
 import com.crediya.loan.model.application.ApplicationPagined;
 import com.crediya.loan.r2dbc.entity.ApplicationEntity;
+import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.data.repository.query.ReactiveQueryByExampleExecutor;
@@ -63,5 +64,13 @@ public interface AplicationReactiveRepository  extends ReactiveCrudRepository<Ap
             @Param("documento") String documento,
             @Param("email") String email
     );
+
+    @Modifying
+    @Query("""
+        UPDATE solicitud
+        SET id_estado = :stateId
+        WHERE id_solicitud = :id
+    """)
+    Mono<Integer> requestStatusChange(@Param("id") Long id, @Param("stateId") Long stateId);
 
 }

@@ -3,6 +3,7 @@ package com.crediya.loan.r2dbc.aplication;
 import com.crediya.loan.model.application.Application;
 import com.crediya.loan.model.application.ApplicationPagined;
 import com.crediya.loan.model.application.PendingApplicationsCriteria;
+import com.crediya.loan.model.application.RequestStatusUpdate;
 import com.crediya.loan.model.application.gateways.ApplicationRepository;
 import com.crediya.loan.model.shared.Page;
 import com.crediya.loan.r2dbc.entity.ApplicationEntity;
@@ -27,9 +28,7 @@ public class AplicationReactiveRepositoryAdapter extends ReactiveAdapterOperatio
 
     private final AplicationEntityMapper aplicationEntityMapper;
     private final AplicationReactiveRepository repository;
-    private final DatabaseClient db;
 
-    private  final Long PENDING_STATE_ID = 1L;
 
 
     public AplicationReactiveRepositoryAdapter(AplicationReactiveRepository repository,
@@ -39,15 +38,13 @@ public class AplicationReactiveRepositoryAdapter extends ReactiveAdapterOperatio
         super(repository, mapper, entity -> mapper.map(entity, Application.class));
         this.aplicationEntityMapper = aplicationEntityMapper;
         this.repository = repository;
-        this.db = db;
+
     }
 
     @Override
     public Mono<Application> save(Application application) {
-        // 1) Mapear el dominio a entidad
         ApplicationEntity entity = aplicationEntityMapper.toEntity(application);
 
-        // 2) Guardar en BD
         return repository.save(entity)
                 // 3) Mapear de vuelta a dominio
                 .map(aplicationEntityMapper::toDomain)
@@ -81,6 +78,14 @@ public class AplicationReactiveRepositoryAdapter extends ReactiveAdapterOperatio
                         tuple.getT1().size(), tuple.getT2()))
                 .map(tuple -> Page.of(tuple.getT1(), criteria.page(), criteria.size(), tuple.getT2()));
     }
+
+    @Override
+    public Mono<Boolean> requestStatusChange(RequestStatusUpdate requestStatusUpdate) {
+        return repository.requestStatusChange(requestStatusUpdate.getId(), requestStatusUpdate.getStateId())
+                .map(rows -> rows > 0);
+    }
+
+
 
 
 }

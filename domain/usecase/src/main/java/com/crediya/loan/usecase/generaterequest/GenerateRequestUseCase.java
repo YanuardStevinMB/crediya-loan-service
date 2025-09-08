@@ -8,6 +8,7 @@ import com.crediya.loan.usecase.generaterequest.generaterequest.ApplicationValid
 import com.crediya.loan.usecase.generaterequest.generaterequest.LoanTypeValidator;
 import com.crediya.loan.usecase.generaterequest.generaterequest.VerifyUserUseCase;
 import com.crediya.loan.usecase.shared.ConfigurationException;
+import com.crediya.loan.usecase.shared.DataValidation;
 import com.crediya.loan.usecase.shared.Messages;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
@@ -18,7 +19,6 @@ import java.util.logging.Logger;
 public class GenerateRequestUseCase {
 
     private static final Logger LOG = Logger.getLogger(GenerateRequestUseCase.class.getName());
-    private static final String DEFAULT_STATE_CODE = "PEN"; // Pendiente de revisión
 
     private final ApplicationRepository applicationRepository;
     private final StatesRepository statesRepository;
@@ -55,9 +55,9 @@ public class GenerateRequestUseCase {
     }
 
     private Mono<Application> assignInitialStateAndSave(Application app) {
-        return statesRepository.findByCode(DEFAULT_STATE_CODE)
+        return statesRepository.findByCode(DataValidation.PENDING_STATUS_CODE)
                 .switchIfEmpty(Mono.error(
-                        new ConfigurationException(Messages.stateNotFound(DEFAULT_STATE_CODE))
+                        new ConfigurationException(Messages.stateNotFound(DataValidation.PENDING_STATUS_CODE))
                 ))
                 .flatMap(state -> {
                     app.setStateId(state.getId());

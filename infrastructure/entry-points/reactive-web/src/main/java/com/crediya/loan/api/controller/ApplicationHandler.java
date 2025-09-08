@@ -8,8 +8,10 @@ import com.crediya.loan.api.dto.ApplicationResponseDto;
 import com.crediya.loan.api.dto.ApplicationSaveDto;
 import com.crediya.loan.api.dto.PagedResponseDto;
 import com.crediya.loan.model.application.PendingApplicationsCriteria;
+import com.crediya.loan.model.application.RequestStatusUpdate;
 import com.crediya.loan.usecase.generaterequest.GenerateRequestUseCase;
 import com.crediya.loan.usecase.getpendingapplications.GetPendingApplicationsUseCase;
+import com.crediya.loan.usecase.requeststatuschange.RequestStatusChangeUseCase;
 import com.crediya.loan.usecase.shared.Messages;
 import com.crediya.loan.usecase.shared.PagindData;
 import jakarta.validation.ConstraintViolationException;
@@ -32,6 +34,7 @@ public class ApplicationHandler {
     private final GetPendingApplicationsUseCase getPendingApplicationsUseCase;
     private final ApplicationMapper applicationMapper ;
     private final ApplicationPaginedMapper applicationPaginedMapper;
+    private final RequestStatusChangeUseCase requestStatusChangeUseCase;
     private final Validator validator;
 
     private <T> Mono<T> validate(T body) {
@@ -80,6 +83,29 @@ public class ApplicationHandler {
 
     }
 
+    public Mono<ServerResponse> updateRequestStatus(ServerRequest request) {
+        String path = request.path(); // para logging o en ApiResponse
+
+        return request.bodyToMono(RequestStatusUpdate.class)
+                .flatMap(reqUpdate ->
+                        requestStatusChangeUseCase.execute(reqUpdate)
+                                .flatMap(result -> ServerResponse.ok()
+                                        .contentType(MediaType.APPLICATION_JSON)
+                                        .bodyValue(
+                                                ApiResponse.ok(result, Messages.APPLICATION_UPDATED, path)
+                                        )
+                                )
+                )
+                .onErrorResume(e ->
+                        ServerResponse.badRequest()
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .bodyValue(ApiResponse.fail(
+                                        Messages.APPLICATION_UPDATE_ERROR,
+                                        e.getMessage(),
+                                        path
+                                ))
+                );
+    }
 
 
 

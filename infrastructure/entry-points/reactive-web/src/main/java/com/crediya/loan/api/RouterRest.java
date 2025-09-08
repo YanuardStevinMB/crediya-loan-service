@@ -4,6 +4,7 @@ import com.crediya.loan.api.controller.ApplicationHandler;
 import com.crediya.loan.api.dto.ApplicationPaginedDto;
 import com.crediya.loan.api.dto.ApplicationResponseDto;
 import com.crediya.loan.api.dto.ApplicationSaveDto;
+import com.crediya.loan.api.dto.ApplicationUpdateStateDto;
 import com.crediya.loan.usecase.shared.PagindData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -19,8 +20,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.reactive.function.server.RouterFunction;
 import org.springframework.web.reactive.function.server.ServerResponse;
 
-import static org.springframework.web.reactive.function.server.RequestPredicates.GET;
-import static org.springframework.web.reactive.function.server.RequestPredicates.POST;
+import static org.springframework.web.reactive.function.server.RequestPredicates.*;
 import static org.springframework.web.reactive.function.server.RouterFunctions.route;
 
 @Configuration
@@ -29,7 +29,7 @@ public class RouterRest {
     @Bean
     @RouterOperations({
             @RouterOperation(
-                    path = "/api/v1/solicitud",
+                    path = "/api/v1/application",
                     method = RequestMethod.POST,
                     beanClass = ApplicationHandler.class,
                     beanMethod = "createApplication",
@@ -50,7 +50,7 @@ public class RouterRest {
                     )
             ),
             @RouterOperation(
-                    path = "/api/v1/solicitud/pending",
+                    path = "/api/v1/application/pending",
                     method = RequestMethod.GET,
                     beanClass = ApplicationHandler.class,
                     beanMethod = "findApplications",
@@ -72,14 +72,36 @@ public class RouterRest {
                                     )
                             }
                     )
-            )
+            ),
+            @RouterOperation(
+                    path = "/api/v1/application/update-state",
+                    method = RequestMethod.PUT,
+                    beanClass = ApplicationHandler.class,
+                    beanMethod = "updateRequestStatus",
+                    operation = @Operation(
+                            operationId = "updateRequestStatus",
+                            summary = "Actualizar el estado de una solicitud",
+                            requestBody = @RequestBody(
+                                    required = true,
+                                    content = @Content(schema = @Schema(implementation = ApplicationUpdateStateDto.class))
+                            ),
+                            responses = {
+                                    @ApiResponse(
+                                            responseCode = "200",
+                                            description = "OK",
+                                            content = @Content(schema = @Schema(implementation = ApplicationResponseDto.class))
+                                    )
+                            }
+                    )
+            ),
     })
     public RouterFunction<ServerResponse> routerFunction(
             ApplicationHandler handler,
             ApiErrorFilter errorFilter
     ) {
-        return route(POST("/api/v1/solicitud"), handler::createApplication)
-                .andRoute(GET("/api/v1/solicitud/pending"), handler::findApplications)
+        return route(POST("/api/v1/application"), handler::createApplication)
+                .andRoute(GET("/api/v1/application/pending"), handler::findApplications)
+                .andRoute(PUT("/api/v1/application/update-state"), handler::updateRequestStatus)
                 .filter(errorFilter);
     }
 }

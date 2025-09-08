@@ -71,7 +71,7 @@ class ApplicationHandlerTest {
         RouterFunction<ServerResponse> router = route(
                 POST("/api/v1/applications"), handler::createApplication
         ).andRoute(
-                GET("/api/v1/solicitud/pending"), handler::findApplications
+                GET("/api/v1/application/pending"), handler::findApplications
         );
 
         client = WebTestClient.bindToRouterFunction(router).build();
@@ -223,7 +223,7 @@ class ApplicationHandlerTest {
 
         client.get()
                 .uri(uriBuilder -> uriBuilder
-                        .path("/api/v1/solicitud/pending")
+                        .path("/api/v1/application/pending")
                         // No enviamos filtros; handler usa defaults internamente
                         .build())
                 .exchange()

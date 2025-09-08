@@ -18,13 +18,17 @@ public final class Messages {
     public static final String LOAN_TYPE_NO_EXIST  = "El tipo de préstamo no existe ";
     public static final String DOC_NUMERIC  = "El documento solo puede tener dígitos (0-9)";
     public static final String DOC_LENGTH   = "El documento debe tener entre 6 y 20 dígitos";
+    public static final String ID_REQUIRED_APPLICATION   = "Se debe ingresar el indentificador de la solicitud, la cual desea modificar";
+    public static final String ID_REQUIRED_STATE   = "Se debe ingresar el indentificador del estado la cual desea, asignarle a la solicitud";
+    public static final  String INVALID_STATE = "El estado debe ser Aprobado o Rechazado";
 
     //restconsumer
     public static final String DATA_USER_NOT_EXIST   = "Los datos ingresados del usuario no son los que están en el sistema.";
 
     // solicitud
     public static final String APPLICATION_CREATED   = "Solicitud creada satisfactoriamente";
-
+    public static final String APPLICATION_UPDATE_ERROR   = " Error al actualizar la solicitud:";
+    public  static  final String APPLICATION_UPDATED =  "Solicitud actualizada correctamente";
     //validated User
     public static final String USER_INVALID =
             "Los datos ingresados no corresponden a un usuario registrado en el sistema. " +
@@ -36,5 +40,9 @@ public final class Messages {
     }
 
     public static String stateNotFound(String code){ return "El estado inicial '" + code + "' no existe"; }
+
+
+
+
 
 }
