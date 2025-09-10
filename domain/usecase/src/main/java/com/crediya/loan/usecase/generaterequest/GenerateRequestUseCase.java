@@ -74,7 +74,6 @@ public class GenerateRequestUseCase {
                                 LOG.info(() -> "Solicitud creada id=" + saved.getId()
                                         + ", state=" + state.getCode());
 
-                                // 🔑 Invocar flujo automático si riesgo < 5
                                 return loanTypeRepository.findById(saved.getLoanTypeId())
                                         .flatMap(loanType -> {
                                             if (loanType.getAutomaticValidation()) {
