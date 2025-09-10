@@ -1,6 +1,7 @@
 package com.crediya.loan.r2dbc.aplication;
 
 import com.crediya.loan.model.application.ApplicationPagined;
+import com.crediya.loan.r2dbc.dto.ApplicationDto;
 import com.crediya.loan.r2dbc.entity.ApplicationEntity;
 import org.springframework.data.r2dbc.repository.Modifying;
 import org.springframework.data.r2dbc.repository.Query;
@@ -72,5 +73,31 @@ public interface AplicationReactiveRepository  extends ReactiveCrudRepository<Ap
         WHERE id_solicitud = :id
     """)
     Mono<Integer> requestStatusChange(@Param("id") Long id, @Param("stateId") Long stateId);
+
+
+    @Query("""
+        SELECT id_solicitud, monto, plazo, email, documento_identidad, id_estado, id_tipo_prestamo
+        FROM crediya_solicitudes.solicitud
+        WHERE id_solicitud = :id
+    """)
+    Mono<ApplicationEntity> findApplicationById(@Param("id") Long id);
+
+
+    @Query("""
+    SELECT 
+        s.id_solicitud,
+        s.monto,
+        s.email,
+        s.documento_identidad,
+        e.nombre          AS state,
+        tp.nombre         AS loan,
+        s.id_estado,
+        s.id_tipo_prestamo
+    FROM solicitud s
+    INNER JOIN tipo_prestamo tp ON s.id_tipo_prestamo = tp.id_tipo_prestamo
+    INNER JOIN estados e        ON e.id_estado        = s.id_estado
+    WHERE s.id_solicitud = :id
+    """)
+    Mono<ApplicationDto> dataApplication(@Param("id") Long id);
 
 }

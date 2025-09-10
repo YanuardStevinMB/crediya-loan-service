@@ -21,7 +21,7 @@ public class ApplicationPagined {
         private String loan;
         private Long stateId;
         private Long loanTypeId;
-    private String fullName;
-    private BigDecimal baseSalary;
+        private String fullName;
+        private BigDecimal baseSalary;
 
 }

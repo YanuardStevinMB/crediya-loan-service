@@ -15,7 +15,7 @@ import org.springframework.context.annotation.FilterType;
         useDefaultFilters = false)
 public class UseCasesConfig {
 
-    // ===== JWT (ya lo tenías) =====
+    // ===== JWT =====
     @Bean
     public JwtReactiveAuthenticationManager jwtReactiveAuthenticationManager(JwtProperties props) {
         return new JwtReactiveAuthenticationManager(props);

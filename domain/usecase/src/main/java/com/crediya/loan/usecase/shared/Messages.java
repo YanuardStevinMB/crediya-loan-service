@@ -29,6 +29,8 @@ public final class Messages {
     public static final String APPLICATION_CREATED   = "Solicitud creada satisfactoriamente";
     public static final String APPLICATION_UPDATE_ERROR   = " Error al actualizar la solicitud:";
     public  static  final String APPLICATION_UPDATED =  "Solicitud actualizada correctamente";
+    public static final  String INVALID_IDENTIFICADOR_APPLICATION = "El indentificador de la solcitud no es valida";
+
     //validated User
     public static final String USER_INVALID =
             "Los datos ingresados no corresponden a un usuario registrado en el sistema. " +

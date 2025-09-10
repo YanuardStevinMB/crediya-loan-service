@@ -12,6 +12,7 @@ public class States {
     private String name;
     private String description;
     private String code;
+    private Long riskLevel;
 
 
 }

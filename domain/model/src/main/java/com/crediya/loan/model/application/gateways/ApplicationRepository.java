@@ -1,9 +1,6 @@
 package com.crediya.loan.model.application.gateways;
 
-import com.crediya.loan.model.application.Application;
-import com.crediya.loan.model.application.ApplicationPagined;
-import com.crediya.loan.model.application.PendingApplicationsCriteria;
-import com.crediya.loan.model.application.RequestStatusUpdate;
+import com.crediya.loan.model.application.*;
 import com.crediya.loan.model.shared.Page;
 import reactor.core.publisher.Mono;
 
@@ -11,5 +8,6 @@ public interface ApplicationRepository {
 
     Mono<Application> save(Application application);
     Mono<Page<ApplicationPagined>> findApplicationsPaginated(PendingApplicationsCriteria criteria);
-    Mono<Boolean> requestStatusChange(RequestStatusUpdate requestStatusUpdate);
+    Mono<ApplicationDataCompleted> requestStatusChange(RequestStatusUpdate requestStatusUpdate);
+    Mono<Application> findById(Long id);
 }

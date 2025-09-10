@@ -21,4 +21,6 @@ public class StatesEntity {
     private String description;
     @Column("codigo")
     private String code;
+    @Column("nivel_riesgo")
+    private Long riskLevel;
 }
