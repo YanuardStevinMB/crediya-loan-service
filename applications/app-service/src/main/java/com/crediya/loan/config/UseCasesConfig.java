@@ -1,7 +1,10 @@
 package com.crediya.loan.config;
 
+import com.crediya.loan.model.states.gateways.StatesRepository;
 import com.crediya.loan.security.JwtProperties;
 import com.crediya.loan.security.JwtReactiveAuthenticationManager;
+import com.crediya.loan.usecase.calculateborrowingcapacity.UpdateValidatedRequest;
+import com.crediya.loan.usecase.requeststatuschange.RequestStatusChangeUseCase;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -19,5 +22,12 @@ public class UseCasesConfig {
     @Bean
     public JwtReactiveAuthenticationManager jwtReactiveAuthenticationManager(JwtProperties props) {
         return new JwtReactiveAuthenticationManager(props);
+    }
+    @Bean
+    public UpdateValidatedRequest updateValidatedRequest(
+            StatesRepository statesRepository,
+            RequestStatusChangeUseCase requestStatusChangeUseCase
+    ) {
+        return new UpdateValidatedRequest(statesRepository, requestStatusChangeUseCase);
     }
 }

@@ -10,6 +10,6 @@ import lombok.*;
 
 public class AnswersApplicationSqs {
     private Long id;
-    private  String code;
+    private  String statusCode;
 
 }

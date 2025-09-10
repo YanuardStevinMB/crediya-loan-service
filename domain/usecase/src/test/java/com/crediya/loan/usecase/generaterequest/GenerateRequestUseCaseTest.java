@@ -6,19 +6,24 @@ import com.crediya.loan.model.loantype.LoanType;
 import com.crediya.loan.model.loantype.gateways.LoanTypeRepository;
 import com.crediya.loan.model.states.States;
 import com.crediya.loan.model.states.gateways.StatesRepository;
+import com.crediya.loan.usecase.calculateborrowingcapacity.CalculateBorrowingCapacityUseCase;
 import com.crediya.loan.usecase.generaterequest.generaterequest.VerifyUserUseCase;
+import com.crediya.loan.usecase.shared.ConfigurationException;
+import com.crediya.loan.usecase.shared.DataValidation;
 import com.crediya.loan.usecase.shared.ValidationException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -36,6 +41,9 @@ class GenerateRequestUseCaseTest {
     @Mock
     VerifyUserUseCase verifyUserUseCase;
 
+    @Mock
+    CalculateBorrowingCapacityUseCase calculateBorrowingCapacityUseCase;
+
     GenerateRequestUseCase useCase;
 
     @BeforeEach
@@ -44,16 +52,12 @@ class GenerateRequestUseCaseTest {
                 applicationRepository,
                 statesRepository,
                 loanTypeRepository,
-                verifyUserUseCase
-
+                verifyUserUseCase,
+                calculateBorrowingCapacityUseCase
         );
-
-        // configuración por defecto: verificar usuario siempre pasa
-
     }
 
-    // ===== Helper Methods =====
-
+    // ===== Helpers =====
     private Application buildApplication(String email, BigDecimal amount, Long loanTypeId, LocalDate term) {
         return Application.builder()
                 .email(email)
@@ -72,6 +76,7 @@ class GenerateRequestUseCaseTest {
                 .amountMax(max)
                 .interestRate(BigDecimal.valueOf(12.5))
                 .automaticValidation(true)
+                .riskLevel(3L)
                 .build();
     }
 
@@ -84,7 +89,7 @@ class GenerateRequestUseCaseTest {
                 .build();
     }
 
-    // ===== Validation Tests =====
+    // ===== Validation in-memory =====
 
     @Test
     void errorWhenApplicationIsNull() {
@@ -92,7 +97,7 @@ class GenerateRequestUseCaseTest {
                 .expectError(ValidationException.class)
                 .verify();
 
-        verifyNoInteractions(applicationRepository, statesRepository, loanTypeRepository);
+        verifyNoInteractions(applicationRepository, statesRepository, loanTypeRepository, verifyUserUseCase, calculateBorrowingCapacityUseCase);
     }
 
     @Test
@@ -104,7 +109,7 @@ class GenerateRequestUseCaseTest {
                 .expectError(ValidationException.class)
                 .verify();
 
-        verifyNoInteractions(applicationRepository, statesRepository, loanTypeRepository);
+        verifyNoInteractions(applicationRepository, statesRepository, loanTypeRepository, calculateBorrowingCapacityUseCase);
     }
 
     @Test
@@ -115,7 +120,7 @@ class GenerateRequestUseCaseTest {
                 .expectError(ValidationException.class)
                 .verify();
 
-        verifyNoInteractions(applicationRepository, statesRepository, loanTypeRepository);
+        verifyNoInteractions(applicationRepository, statesRepository, loanTypeRepository, calculateBorrowingCapacityUseCase);
     }
 
     @Test
@@ -126,7 +131,7 @@ class GenerateRequestUseCaseTest {
                 .expectError(ValidationException.class)
                 .verify();
 
-        verifyNoInteractions(applicationRepository, statesRepository, loanTypeRepository);
+        verifyNoInteractions(applicationRepository, statesRepository, loanTypeRepository, calculateBorrowingCapacityUseCase);
     }
 
     @Test
@@ -137,7 +142,7 @@ class GenerateRequestUseCaseTest {
                 .expectError(ValidationException.class)
                 .verify();
 
-        verifyNoInteractions(applicationRepository, statesRepository, loanTypeRepository);
+        verifyNoInteractions(applicationRepository, statesRepository, loanTypeRepository, calculateBorrowingCapacityUseCase);
     }
 
     @Test
@@ -148,9 +153,86 @@ class GenerateRequestUseCaseTest {
                 .expectError(ValidationException.class)
                 .verify();
 
-        verifyNoInteractions(applicationRepository, statesRepository, loanTypeRepository);
+        verifyNoInteractions(applicationRepository, statesRepository, loanTypeRepository, calculateBorrowingCapacityUseCase);
     }
 
+    // ===== Success Flows =====
 
+    @Test
+    void successFlow_whenLoanTypeHighRisk_shouldNotInvokeCalculateCapacity() {
+        var app = buildApplication("ok@mail.com", BigDecimal.valueOf(8000), 1L, LocalDate.now().plusMonths(6));
+        var state = buildState(100L, DataValidation.PENDING_STATUS_CODE);
+        var loanType = buildLoanType(1L, BigDecimal.valueOf(1000), BigDecimal.valueOf(20000));
+        loanType.setRiskLevel(10L); // riesgo alto
 
+        when(verifyUserUseCase.execute(any(), any())).thenReturn(Mono.just(BigDecimal.valueOf(3000)));
+        when(loanTypeRepository.findById(1L)).thenReturn(Mono.just(loanType));
+        when(statesRepository.findByCode(DataValidation.PENDING_STATUS_CODE)).thenReturn(Mono.just(state));
+        when(applicationRepository.save(any())).thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+
+        StepVerifier.create(useCase.execute(app))
+                .expectNextMatches(saved -> saved.getStateId().equals(100L))
+                .verifyComplete();
+
+        verify(calculateBorrowingCapacityUseCase, never()).execute(any(), any());
+    }
+
+    @Test
+    void successFlow_whenLoanTypeLowRisk_shouldInvokeCalculateCapacity() {
+        var app = buildApplication("ok@mail.com", BigDecimal.valueOf(8000), 1L, LocalDate.now().plusMonths(6));
+        var state = buildState(200L, DataValidation.PENDING_STATUS_CODE);
+        var loanType = buildLoanType(1L, BigDecimal.valueOf(1000), BigDecimal.valueOf(20000));
+        loanType.setRiskLevel(3L); // riesgo bajo
+
+        when(verifyUserUseCase.execute(any(), any())).thenReturn(Mono.just(BigDecimal.valueOf(5000)));
+        when(loanTypeRepository.findById(1L)).thenReturn(Mono.just(loanType));
+        when(statesRepository.findByCode(DataValidation.PENDING_STATUS_CODE)).thenReturn(Mono.just(state));
+        when(applicationRepository.save(any())).thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+        when(calculateBorrowingCapacityUseCase.execute(any(), any())).thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+
+        StepVerifier.create(useCase.execute(app))
+                .expectNextMatches(saved -> saved.getStateId().equals(200L))
+                .verifyComplete();
+
+        verify(calculateBorrowingCapacityUseCase).execute(any(), eq(BigDecimal.valueOf(5000)));
+    }
+
+    // ===== Errors in dependencies =====
+
+    @Test
+    void errorWhenUserVerificationFails() {
+        var app = buildApplication("user@mail.com", BigDecimal.valueOf(7000), 1L, LocalDate.now().plusMonths(6));
+        when(verifyUserUseCase.execute(any(), any())).thenReturn(Mono.error(new RuntimeException("gateway down")));
+
+        StepVerifier.create(useCase.execute(app))
+                .expectErrorMatches(e -> e instanceof RuntimeException && e.getMessage().equals("gateway down"))
+                .verify();
+
+        verifyNoInteractions(applicationRepository, statesRepository, calculateBorrowingCapacityUseCase);
+    }
+//
+//    @Test
+//    void errorWhenLoanTypeNotFound() {
+//        var app = buildApplication("user@mail.com", BigDecimal.valueOf(7000), 1L, LocalDate.now().plusMonths(6));
+//        when(verifyUserUseCase.execute(any(), any())).thenReturn(Mono.just(BigDecimal.valueOf(4000)));
+//        when(loanTypeRepository.findById(1L)).thenReturn(Mono.empty());
+//
+//        StepVerifier.create(useCase.execute(app))
+//                .expectError(ConfigurationException.class)
+//                .verify();
+//    }
+
+    @Test
+    void errorWhenPendingStateNotFound() {
+        var app = buildApplication("user@mail.com", BigDecimal.valueOf(7000), 1L, LocalDate.now().plusMonths(6));
+        var loanType = buildLoanType(1L, BigDecimal.valueOf(1000), BigDecimal.valueOf(20000));
+
+        when(verifyUserUseCase.execute(any(), any())).thenReturn(Mono.just(BigDecimal.valueOf(4000)));
+        when(loanTypeRepository.findById(1L)).thenReturn(Mono.just(loanType));
+        when(statesRepository.findByCode(DataValidation.PENDING_STATUS_CODE)).thenReturn(Mono.empty());
+
+        StepVerifier.create(useCase.execute(app))
+                .expectError(ConfigurationException.class)
+                .verify();
+    }
 }

@@ -20,9 +20,9 @@ public class UpdateValidatedRequest {
     private final RequestStatusChangeUseCase requestStatusChangeUseCase;
 
     public Mono<String> execute(AnswersApplicationSqs answersApplicationSqs) {
-        return statesRepository.findByCode(answersApplicationSqs.getCode())
+        return statesRepository.findByCode(answersApplicationSqs.getStatusCode())
                 .switchIfEmpty(Mono.error(
-                        new ConfigurationException(Messages.stateNotFound(answersApplicationSqs.getCode()))
+                        new ConfigurationException(Messages.stateNotFound(answersApplicationSqs.getStatusCode()))
                 ))
                 .flatMap(state -> {
                     RequestStatusUpdate update = RequestStatusUpdate.builder()

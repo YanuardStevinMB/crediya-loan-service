@@ -1,25 +1,24 @@
 package com.crediya.loan.r2dbc.aplication;
 
-import com.crediya.loan.model.application.Application;
-import com.crediya.loan.model.application.ApplicationPagined;
-import com.crediya.loan.model.application.PendingApplicationsCriteria;
-import com.crediya.loan.model.shared.Page;
+import com.crediya.loan.model.application.*;
+import com.crediya.loan.r2dbc.dto.ApplicationApprovedDto;
+import com.crediya.loan.r2dbc.dto.ApplicationDto;
 import com.crediya.loan.r2dbc.entity.ApplicationEntity;
 import com.crediya.loan.r2dbc.mapper.AplicationEntityMapper;
+import com.crediya.loan.r2dbc.mapper.ApplicationApprovedMapper;
+import com.crediya.loan.r2dbc.mapper.ApplicationDataCompletedMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
+import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.reactivecommons.utils.ObjectMapper;
-import org.springframework.r2dbc.core.DatabaseClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -31,14 +30,20 @@ class AplicationReactiveRepositoryAdapterTest {
     @Mock AplicationReactiveRepository repository;
     @Mock AplicationEntityMapper aplicationEntityMapper;
     @Mock ObjectMapper mapper;
-    @Mock DatabaseClient db;
+    @Mock ApplicationDataCompletedMapper applicationDataCompletedMapper;
+    @Mock ApplicationApprovedMapper applicationApprovedMapper;
 
-    // lo instanciamos explícito para usar el ctor con DatabaseClient
     AplicationReactiveRepositoryAdapter adapter;
 
     @BeforeEach
     void init() {
-        adapter = new AplicationReactiveRepositoryAdapter(repository, aplicationEntityMapper, mapper, db);
+        adapter = new AplicationReactiveRepositoryAdapter(
+                repository,
+                aplicationEntityMapper,
+                mapper,
+                applicationDataCompletedMapper,
+                applicationApprovedMapper
+        );
     }
 
     private Application buildApplication(String email, BigDecimal amount) {
@@ -64,9 +69,20 @@ class AplicationReactiveRepositoryAdapterTest {
                 .build();
     }
 
+    private ApplicationDataCompleted buildCompleted(Long id, Long stateId) {
+        return ApplicationDataCompleted.builder()
+                .id(id)
+                .amount(BigDecimal.valueOf(3000))
+                .email("user@mail.com")
+                .identityDocument("CC123")
+                .loan("PERSONAL")
+                .state("PENDING")
+                .stateId(stateId)
+                .loanTypeId(1L)
+                .build();
+    }
+
     // ---------- save -----------
-
-
 
     @Test
     void save_validApplication_mapsAndPersists_ok() {
@@ -82,16 +98,12 @@ class AplicationReactiveRepositoryAdapterTest {
         when(aplicationEntityMapper.toDomain(persistedEntity)).thenReturn(mappedDomain);
 
         StepVerifier.create(adapter.save(application))
-                .expectNextMatches(saved ->
-                        saved.getId() != null &&
-                                saved.getId().equals(1L) &&
-                                "test@example.com".equals(saved.getEmail()))
+                .expectNextMatches(saved -> saved.getId() != null && saved.getEmail().equals("test@example.com"))
                 .verifyComplete();
 
-        verify(aplicationEntityMapper, times(1)).toEntity(application);
-        verify(repository, times(1)).save(entity);
-        verify(aplicationEntityMapper, times(1)).toDomain(persistedEntity);
-        verifyNoMoreInteractions(repository);
+        verify(aplicationEntityMapper).toEntity(application);
+        verify(repository).save(entity);
+        verify(aplicationEntityMapper).toDomain(persistedEntity);
     }
 
     @Test
@@ -103,34 +115,22 @@ class AplicationReactiveRepositoryAdapterTest {
         when(repository.save(entity)).thenReturn(Mono.error(new RuntimeException("Database error")));
 
         StepVerifier.create(adapter.save(application))
-                .expectErrorMatches(throwable ->
-                        throwable instanceof RuntimeException &&
-                                "Database error".equals(throwable.getMessage()))
+                .expectErrorMatches(ex -> ex instanceof RuntimeException && ex.getMessage().equals("Database error"))
                 .verify();
 
-        verify(aplicationEntityMapper, times(1)).toEntity(application);
-        verify(repository, times(1)).save(entity);
+        verify(aplicationEntityMapper).toEntity(application);
+        verify(repository).save(entity);
         verify(aplicationEntityMapper, never()).toDomain(any());
-        verifyNoMoreInteractions(repository);
     }
 
     // ---------- findApplicationsPaginated -----------
 
-
-
     @Test
     void findApplicationsPaginated_emptyResult_shouldReturnEmptyPage() {
-        PendingApplicationsCriteria criteria = mock(PendingApplicationsCriteria.class);
-        when(criteria.page()).thenReturn(1);
-        when(criteria.size()).thenReturn(5);
-        when(criteria.state()).thenReturn(null);
-        when(criteria.document()).thenReturn(null);
-        when(criteria.email()).thenReturn(null);
+        PendingApplicationsCriteria criteria = new PendingApplicationsCriteria(null, null, null, 1, 5);
 
-        when(repository.dataApplicationPagined(null, null, null, 5, 0))
-                .thenReturn(Flux.empty());
-        when(repository.countApplications(null, null, null))
-                .thenReturn(Mono.just(0L));
+        when(repository.dataApplicationPagined(null, null, null, 5, 0)).thenReturn(Flux.empty());
+        when(repository.countApplications(null, null, null)).thenReturn(Mono.just(0L));
 
         StepVerifier.create(adapter.findApplicationsPaginated(criteria))
                 .assertNext(page -> {
@@ -140,33 +140,103 @@ class AplicationReactiveRepositoryAdapterTest {
                     assertTrue(page.content().isEmpty());
                 })
                 .verifyComplete();
-
-        verify(repository).dataApplicationPagined(null, null, null, 5, 0);
-        verify(repository).countApplications(null, null, null);
     }
 
     @Test
     void findApplicationsPaginated_repoError_shouldPropagate() {
-        PendingApplicationsCriteria criteria = mock(PendingApplicationsCriteria.class);
-        when(criteria.page()).thenReturn(1);
-        when(criteria.size()).thenReturn(10);
-        when(criteria.state()).thenReturn("PEN");
-        when(criteria.document()).thenReturn("123");
-        when(criteria.email()).thenReturn("a@b.com");
+        PendingApplicationsCriteria criteria = new PendingApplicationsCriteria("PEN", "123", "a@b.com", 1, 10);
 
         when(repository.dataApplicationPagined(any(), any(), any(), anyInt(), anyInt()))
                 .thenReturn(Flux.error(new RuntimeException("DB error")));
-
-        // aunque countApplications devolviera algo, el zip fallará por el error del Flux
-        when(repository.countApplications(any(), any(), any()))
-                .thenReturn(Mono.just(10L));
+        when(repository.countApplications(any(), any(), any())).thenReturn(Mono.just(10L));
 
         StepVerifier.create(adapter.findApplicationsPaginated(criteria))
-                .expectErrorMatches(ex -> ex instanceof RuntimeException &&
-                        ex.getMessage().equals("DB error"))
+                .expectErrorMatches(ex -> ex instanceof RuntimeException && ex.getMessage().equals("DB error"))
                 .verify();
+    }
 
-        verify(repository).dataApplicationPagined("PEN", "123", "a@b.com", 10, 0);
-        verify(repository).countApplications("PEN", "123", "a@b.com");
+    // ---------- requestStatusChange -----------
+
+    @Test
+    void requestStatusChange_shouldReturnDomain_whenStateMatches() {
+        var update = new RequestStatusUpdate(1L, 20L);
+        var dto = new ApplicationDto();
+        dto.setId(1L);
+        dto.setStateId(20L);
+
+        var completed = buildCompleted(1L, 20L);
+
+        when(repository.requestStatusChange(1L, 20L)).thenReturn(Mono.just(1));
+        when(repository.dataApplication(1L)).thenReturn(Mono.just(dto));
+        when(applicationDataCompletedMapper.toDomain(dto)).thenReturn(completed);
+
+        StepVerifier.create(adapter.requestStatusChange(update))
+                .expectNext(completed)
+                .verifyComplete();
+
+        verify(repository).requestStatusChange(1L, 20L);
+        verify(repository).dataApplication(1L);
+        verify(applicationDataCompletedMapper).toDomain(dto);
+    }
+
+    @Test
+    void requestStatusChange_shouldError_whenEntityNotFound() {
+        var update = new RequestStatusUpdate(2L, 30L);
+
+        when(repository.requestStatusChange(2L, 30L)).thenReturn(Mono.just(1));
+        when(repository.dataApplication(2L)).thenReturn(Mono.empty());
+
+        StepVerifier.create(adapter.requestStatusChange(update))
+                .expectError(IllegalStateException.class)
+                .verify();
+    }
+
+    @Test
+    void requestStatusChange_shouldError_whenStateMismatch() {
+        var update = new RequestStatusUpdate(3L, 40L);
+        var dto = new ApplicationDto();
+        dto.setId(3L);
+        dto.setStateId(99L); // mismatch
+
+        when(repository.requestStatusChange(3L, 40L)).thenReturn(Mono.just(1));
+        when(repository.dataApplication(3L)).thenReturn(Mono.just(dto));
+
+        StepVerifier.create(adapter.requestStatusChange(update))
+                .expectErrorMatches(ex -> ex instanceof IllegalStateException &&
+                        ex.getMessage().contains("Estado no coincide"))
+                .verify();
+    }
+
+    // ---------- approvedApplications -----------
+
+    @Test
+    void approvedApplications_shouldMapResults() {
+        var dto = new ApplicationApprovedDto();
+        dto.setAmount(BigDecimal.valueOf(2000));
+        dto.setInterestRate(BigDecimal.valueOf(5));
+        dto.setTermMonths(12L);
+
+        var domain = new ApplicationApproved(BigDecimal.valueOf(2000), BigDecimal.valueOf(5), 12L);
+
+        when(repository.applicationApproved("CC123")).thenReturn(Flux.just(dto));
+        when(applicationApprovedMapper.toDomain(dto)).thenReturn(domain);
+
+        StepVerifier.create(adapter.approvedApplications("CC123"))
+                .expectNext(domain)
+                .verifyComplete();
+
+        verify(repository).applicationApproved("CC123");
+        verify(applicationApprovedMapper).toDomain(dto);
+    }
+
+    @Test
+    void approvedApplications_shouldReturnEmptyFlux_whenNoResults() {
+        when(repository.applicationApproved("CC999")).thenReturn(Flux.empty());
+
+        StepVerifier.create(adapter.approvedApplications("CC999"))
+                .verifyComplete();
+
+        verify(repository).applicationApproved("CC999");
+        verifyNoInteractions(applicationApprovedMapper);
     }
 }

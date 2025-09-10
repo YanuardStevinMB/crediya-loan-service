@@ -22,13 +22,14 @@ public class SQSProcessor implements Function<Message, Mono<Void>> {
     @Override
     public Mono<Void> apply(Message message) {
         return Mono.fromCallable(() -> {
+            System.out.println(message.body());
                     // mapear directamente el JSON al DTO
                     AnswersApplicationSqs dto = objectMapper.readValue(
                             message.body(),
                             AnswersApplicationSqs.class
                     );
 
-                    log.info("[SQSProcessor] Mensaje recibido → id={} code={}", dto.getId(), dto.getCode());
+                    log.info("[SQSProcessor] Mensaje recibido → id={} code={}", dto.getId(), dto.getStatusCode());
                     return dto;
                 })
                 .flatMap(updateValidatedRequest::execute) // invocamos al caso de uso

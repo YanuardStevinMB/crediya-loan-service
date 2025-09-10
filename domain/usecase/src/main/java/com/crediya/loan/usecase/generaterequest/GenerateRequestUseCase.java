@@ -77,7 +77,7 @@ public class GenerateRequestUseCase {
                                 // 🔑 Invocar flujo automático si riesgo < 5
                                 return loanTypeRepository.findById(saved.getLoanTypeId())
                                         .flatMap(loanType -> {
-                                            if (loanType.getRiskLevel() != null && loanType.getRiskLevel() < 5) {
+                                            if (loanType.getAutomaticValidation()) {
                                                 LOG.fine("LoanType con bajo riesgo → invocando cálculo automático");
                                                 return calculateBorrowingCapacityUseCase.execute(saved,baseSalary);
                                             }

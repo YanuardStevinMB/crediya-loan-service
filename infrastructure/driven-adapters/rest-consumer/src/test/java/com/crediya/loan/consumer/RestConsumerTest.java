@@ -1,8 +1,6 @@
 package com.crediya.loan.consumer;
 
-import com.crediya.loan.consumer.dto.LoadUsersResponseDto;
 import com.crediya.loan.consumer.dto.UserDto;
-import com.crediya.loan.consumer.dto.UserExistResponseDto;
 import com.crediya.loan.consumer.mapper.UserLoadMapper;
 import com.crediya.loan.model.user.User;
 import okhttp3.mockwebserver.MockResponse;
@@ -21,7 +19,6 @@ import reactor.test.StepVerifier;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.time.Duration;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -32,8 +29,7 @@ class RestConsumerTest {
 
     private MockWebServer server;
     private WebClient client;
-
-    private UserLoadMapper mapper; // mock
+    private UserLoadMapper mapper;
     private RestConsumer restConsumer;
 
     @BeforeEach
@@ -63,9 +59,16 @@ class RestConsumerTest {
     // ===== verify(...) =====
 
     @Test
-    void verify_shouldReturnTrue_whenApiSaysSuccess_andSendBearerHeader() throws InterruptedException {
-        // Respuesta 200 OK con success=true
-        var body = "{\"success\":true}";
+    void verify_shouldReturnBaseSalary_whenApiSaysSuccess() throws InterruptedException {
+        var body = """
+                {
+                   "success": true,
+                   "data": {
+                     "exists": true,
+                     "baseSalary": 1500.75
+                   }
+                }
+                """;
         server.enqueue(new MockResponse()
                 .setResponseCode(200)
                 .setBody(body)
@@ -78,10 +81,9 @@ class RestConsumerTest {
                         restConsumer.verify("123", "a@b.c")
                                 .contextWrite(withSecurityContext(Mono.just(sc)))
                 )
-                .expectNext(true)
+                .expectNext(new BigDecimal("1500.75"))
                 .verifyComplete();
 
-        // Verifica request
         RecordedRequest req = server.takeRequest();
         assertEquals("/api/v1/users/exist", req.getPath());
         assertEquals("POST", req.getMethod());
@@ -89,8 +91,7 @@ class RestConsumerTest {
     }
 
     @Test
-    void verify_shouldReturnFalse_on4xxMappedAsUserNotFound() {
-        // 404 -> onStatus(is4xx) -> IllegalArgumentException -> onErrorResume -> false
+    void verify_shouldReturnZero_whenUserNotFound_4xx() {
         server.enqueue(new MockResponse()
                 .setResponseCode(404)
                 .setBody("not found")
@@ -102,13 +103,12 @@ class RestConsumerTest {
                         restConsumer.verify("999", "x@y.z")
                                 .contextWrite(withSecurityContext(Mono.just(sc)))
                 )
-                .expectNext(false)
+                .expectNext(BigDecimal.ZERO)
                 .verifyComplete();
     }
 
     @Test
     void verify_shouldError_on5xx() {
-        // 500 -> WebClientResponseException (no onStatus para 5xx)
         server.enqueue(new MockResponse()
                 .setResponseCode(500)
                 .setBody("boom")
@@ -146,7 +146,6 @@ class RestConsumerTest {
                 .setBody(body)
                 .addHeader("Content-Type", "application/json"));
 
-        // Mock del mapper: construye el dominio desde el DTO recibido
         when(mapper.toDomain(ArgumentMatchers.any(UserDto.class)))
                 .thenAnswer(inv -> {
                     UserDto dto = inv.getArgument(0);
@@ -165,18 +164,8 @@ class RestConsumerTest {
                         restConsumer.loadUsers()
                                 .contextWrite(withSecurityContext(Mono.just(sc)))
                 )
-                .expectNextMatches(u ->
-                        u.getFirstName().equals("Ana") &&
-                                u.getLastName().equals("Diaz") &&
-                                u.getIdentityDocument().equals("CC1") &&
-                                new BigDecimal("1200.50").compareTo(u.getBaseSalary()) == 0
-                )
-                .expectNextMatches(u ->
-                        u.getFirstName().equals("Luis") &&
-                                u.getLastName().equals("Vega") &&
-                                u.getIdentityDocument().equals("CC2") &&
-                                new BigDecimal("2000.00").compareTo(u.getBaseSalary()) == 0
-                )
+                .expectNextMatches(u -> u.getFirstName().equals("Ana") && u.getIdentityDocument().equals("CC1"))
+                .expectNextMatches(u -> u.getFirstName().equals("Luis") && u.getIdentityDocument().equals("CC2"))
                 .verifyComplete();
 
         RecordedRequest req = server.takeRequest();

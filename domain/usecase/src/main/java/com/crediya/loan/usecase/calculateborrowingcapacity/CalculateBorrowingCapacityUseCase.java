@@ -1,7 +1,6 @@
 package com.crediya.loan.usecase.calculateborrowingcapacity;
 
 import com.crediya.loan.model.application.Application;
-import com.crediya.loan.model.application.ApplicationApproved;
 import com.crediya.loan.model.application.gateways.ApplicationRepository;
 import com.crediya.loan.model.application.gateways.BorrowingCapacitySender;
 import lombok.RequiredArgsConstructor;

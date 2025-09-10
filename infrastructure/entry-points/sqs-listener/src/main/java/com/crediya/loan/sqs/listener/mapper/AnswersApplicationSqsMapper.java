@@ -7,7 +7,7 @@ public interface AnswersApplicationSqsMapper {
         if (dto == null) return null;
         return AnswersApplicationSqs.builder()
                 .id(dto.getId())
-                .code(dto.getCode())
+                .statusCode(dto.getCode())
                 .build();
     }
 

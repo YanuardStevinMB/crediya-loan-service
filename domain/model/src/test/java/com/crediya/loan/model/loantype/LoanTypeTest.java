@@ -19,6 +19,7 @@ class LoanTypeTest {
         lt.setAmountMax(new BigDecimal("50000.00"));
         lt.setInterestRate(new BigDecimal("12.50"));
         lt.setAutomaticValidation(Boolean.TRUE);
+        lt.setRiskLevel(5L);
 
         assertEquals(1L, lt.getId());
         assertEquals("Personal", lt.getName());
@@ -26,6 +27,7 @@ class LoanTypeTest {
         assertEquals(new BigDecimal("50000.00"), lt.getAmountMax());
         assertEquals(new BigDecimal("12.50"), lt.getInterestRate());
         assertTrue(lt.getAutomaticValidation());
+        assertEquals(5L, lt.getRiskLevel());
     }
 
     @Test
@@ -37,7 +39,8 @@ class LoanTypeTest {
                 new BigDecimal("20000.00"),
                 new BigDecimal("300000.00"),
                 new BigDecimal("9.75"),
-                Boolean.FALSE
+                Boolean.FALSE,
+                3L
         );
 
         assertEquals(2L, lt.getId());
@@ -46,6 +49,7 @@ class LoanTypeTest {
         assertEquals(new BigDecimal("300000.00"), lt.getAmountMax());
         assertEquals(new BigDecimal("9.75"), lt.getInterestRate());
         assertFalse(lt.getAutomaticValidation());
+        assertEquals(3L, lt.getRiskLevel());
     }
 
     @Test
@@ -58,6 +62,7 @@ class LoanTypeTest {
                 .amountMax(new BigDecimal("80000.00"))
                 .interestRate(new BigDecimal("11.00"))
                 .automaticValidation(Boolean.TRUE)
+                .riskLevel(2L)
                 .build();
 
         assertEquals(3L, lt.getId());
@@ -66,6 +71,7 @@ class LoanTypeTest {
         assertEquals(new BigDecimal("80000.00"), lt.getAmountMax());
         assertEquals(new BigDecimal("11.00"), lt.getInterestRate());
         assertTrue(lt.getAutomaticValidation());
+        assertEquals(2L, lt.getRiskLevel());
     }
 
     @Test
@@ -78,6 +84,7 @@ class LoanTypeTest {
                 .amountMax(null)
                 .interestRate(null)
                 .automaticValidation(null)
+                .riskLevel(null)
                 .build();
 
         assertNull(lt.getId());
@@ -86,5 +93,6 @@ class LoanTypeTest {
         assertNull(lt.getAmountMax());
         assertNull(lt.getInterestRate());
         assertNull(lt.getAutomaticValidation());
+        assertNull(lt.getRiskLevel());
     }
 }
