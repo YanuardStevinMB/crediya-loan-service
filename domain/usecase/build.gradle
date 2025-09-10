@@ -1,3 +1,6 @@
 dependencies {
+    implementation project(':usecase')
     implementation project(':model')
+
+
 }

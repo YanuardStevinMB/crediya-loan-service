@@ -33,4 +33,6 @@ public class LoanTypeEntity {
 
     @Column("validacion_automatica")
     private Boolean automaticValidation;
+    @Column("nivel_riesgo")
+    private Long riskLevel;
 }

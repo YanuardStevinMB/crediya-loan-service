@@ -5,4 +5,5 @@ import reactor.core.publisher.Mono;
 
 public interface ApplicationSenderSqs {
     Mono<String> sendStatusChange(ApplicationDataCompleted app);
+
 }

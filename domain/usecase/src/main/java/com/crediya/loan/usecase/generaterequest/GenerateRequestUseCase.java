@@ -4,6 +4,7 @@ import com.crediya.loan.model.application.Application;
 import com.crediya.loan.model.application.gateways.ApplicationRepository;
 import com.crediya.loan.model.loantype.gateways.LoanTypeRepository;
 import com.crediya.loan.model.states.gateways.StatesRepository;
+import com.crediya.loan.usecase.calculateborrowingcapacity.CalculateBorrowingCapacityUseCase;
 import com.crediya.loan.usecase.generaterequest.generaterequest.ApplicationValidator;
 import com.crediya.loan.usecase.generaterequest.generaterequest.LoanTypeValidator;
 import com.crediya.loan.usecase.generaterequest.generaterequest.VerifyUserUseCase;
@@ -13,6 +14,7 @@ import com.crediya.loan.usecase.shared.Messages;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
 import java.util.logging.Logger;
 
 @RequiredArgsConstructor
@@ -24,23 +26,27 @@ public class GenerateRequestUseCase {
     private final StatesRepository statesRepository;
     private final LoanTypeRepository loanTypeRepository;
     private final VerifyUserUseCase verifyUserUseCase;
+    private final CalculateBorrowingCapacityUseCase calculateBorrowingCapacityUseCase;
 
     public Mono<Application> execute(Application app) {
         return Mono.defer(() -> {
             ApplicationValidator.validateAndNormalize(app); // Validación in-memory
             LOG.fine("GenerateRequestUseCase.execute() - inicio");
 
-            return verifyUser(app)
-                    .then(validateLoanType(app))
-                    .then(assignInitialStateAndSave(app))
+            return verifyUser(app) // devuelve Mono<BigDecimal> (baseSalary)
+                    .flatMap(baseSalary ->
+                            validateLoanType(app) // valida el LoanType
+                                    .then(assignInitialStateAndSave(app, baseSalary)) // guarda y dispara flujo automático
+                    )
                     .doOnError(e -> LOG.warning(() -> "Error en generate request: " + e.getMessage()))
                     .doOnSuccess(ok -> LOG.fine("GenerateRequestUseCase.execute() - éxito"));
         });
     }
 
-    // ---------------- MÉTODOS PRIVADOS ----------------
 
-    private Mono<Boolean> verifyUser(Application app) {
+
+
+    private Mono<BigDecimal> verifyUser(Application app) {
         return verifyUserUseCase.execute(app.getIdentityDocument(), app.getEmail())
                 .doOnNext(valid -> LOG.fine("Usuario verificado para documento=" + app.getIdentityDocument()));
     }
@@ -54,7 +60,7 @@ public class GenerateRequestUseCase {
                 .doOnSuccess(ok -> LOG.fine("Tipo de préstamo validado: " + app.getLoanTypeId()));
     }
 
-    private Mono<Application> assignInitialStateAndSave(Application app) {
+    private Mono<Application> assignInitialStateAndSave(Application app, BigDecimal baseSalary) {
         return statesRepository.findByCode(DataValidation.PENDING_STATUS_CODE)
                 .switchIfEmpty(Mono.error(
                         new ConfigurationException(Messages.stateNotFound(DataValidation.PENDING_STATUS_CODE))
@@ -62,11 +68,26 @@ public class GenerateRequestUseCase {
                 .flatMap(state -> {
                     app.setStateId(state.getId());
                     LOG.fine(() -> "Estado inicial asignado: " + state.getCode());
+
                     return applicationRepository.save(app)
-                            .doOnSuccess(saved -> LOG.info(() ->
-                                    "Solicitud creada id=" + saved.getId()
-                                            + ", state=" + state.getCode()
-                            ));
+                            .flatMap(saved -> {
+                                LOG.info(() -> "Solicitud creada id=" + saved.getId()
+                                        + ", state=" + state.getCode());
+
+                                // 🔑 Invocar flujo automático si riesgo < 5
+                                return loanTypeRepository.findById(saved.getLoanTypeId())
+                                        .flatMap(loanType -> {
+                                            if (loanType.getRiskLevel() != null && loanType.getRiskLevel() < 5) {
+                                                LOG.fine("LoanType con bajo riesgo → invocando cálculo automático");
+                                                return calculateBorrowingCapacityUseCase.execute(saved,baseSalary);
+                                            }
+                                            LOG.fine("LoanType con alto riesgo → no se dispara cálculo automático");
+                                            return Mono.just(saved);
+                                        });
+                            });
                 });
     }
+
+
+
 }

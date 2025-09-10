@@ -1,8 +1,11 @@
 package com.crediya.loan.usecase.generaterequest.generaterequest;
+
 import com.crediya.loan.usecase.generaterequest.gateway.UserManagementGateway;
 import com.crediya.loan.usecase.shared.Messages;
 import com.crediya.loan.usecase.shared.ValidationException;
 import reactor.core.publisher.Mono;
+
+import java.math.BigDecimal;
 
 public class VerifyUserUseCase {
 
@@ -12,13 +15,13 @@ public class VerifyUserUseCase {
         this.gateway = gateway;
     }
 
-    public Mono<Boolean> execute(String documentNumber, String email) {
+    public Mono<BigDecimal> execute(String documentNumber, String email) {
         return gateway.verify(documentNumber, email)
-                .flatMap(exists -> {
-                    if (!exists) {
-                        return Mono.error(new ValidationException("User",Messages.USER_INVALID));
+                .flatMap(baseSalary -> {
+                    if (baseSalary == null || baseSalary.compareTo(BigDecimal.ZERO) <= 0) {
+                        return Mono.error(new ValidationException("User", Messages.USER_INVALID));
                     }
-                    return Mono.just(true);
+                    return Mono.just(baseSalary);
                 });
     }
 }

@@ -41,7 +41,8 @@ public class SecurityConfig {
                         .pathMatchers(HttpMethod.GET, "/api/v1/application/pending").hasAnyRole("ADMIN","ASESOR")
 
                         // Regla datos de usuario
-                        .pathMatchers(HttpMethod.POST, "/api/v1/application").hasAnyRole("ADMIN","ASESOR","CLIENTE")
+                        .pathMatchers(HttpMethod.POST, "/api/v1/application").permitAll()
+                        //hasAnyRole("ADMIN","ASESOR","CLIENTE")
 
                         //.hasAnyRole("CLIENTE")
                         // Resto autenticado

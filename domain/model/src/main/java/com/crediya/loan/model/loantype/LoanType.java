@@ -18,6 +18,7 @@ public class LoanType {
     private BigDecimal amountMax;
     private BigDecimal interestRate;
     private Boolean automaticValidation;
+    private Long riskLevel;
 
 
 }

@@ -1,0 +1,18 @@
+databaseChangeLog:
+  - changeSet:
+      id: alter-table-tipo-prestamo-add-column-nivel-riesgo
+      author: yanuard
+      changes:
+        - addColumn:
+            tableName: tipo_prestamo
+            columns:
+              - column:
+                  name: nivel_riesgo
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+        - addDefaultValue:
+            tableName: tipo_prestamo
+            columnName: nivel_riesgo
+            defaultValueNumeric: 1
+            columnDataType: BIGINT

@@ -15,6 +15,8 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.math.BigDecimal;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -26,7 +28,7 @@ public class RestConsumer implements UserManagementGateway {
 
     @Override
     @CircuitBreaker(name = "userExist")
-    public Mono<Boolean> verify(String documentNumber, String email) {
+    public Mono<BigDecimal> verify(String documentNumber, String email) {
         var request = UserExistRequestDto.builder()
                 .document(documentNumber)
                 .email(email)
@@ -34,36 +36,36 @@ public class RestConsumer implements UserManagementGateway {
 
         return ReactiveSecurityContextHolder.getContext()
                 .map(ctx -> ctx.getAuthentication().getCredentials().toString())
-                .flatMap(token -> {
-                    log.info("[RestConsumer.verify] Preparando request → documentNumber={}, email={}", documentNumber, email);
-
-                    return client.post()
-                            .uri("/api/v1/users/exist")
-                            .header("Authorization", "Bearer " + token)
-                            .bodyValue(request)
-                            .retrieve()
-                            // ⬇️ Aquí interceptamos errores 4xx
-                            .onStatus(status -> status.is4xxClientError(), response -> {
-                                log.warn("[RestConsumer.verify] La API devolvió 4xx, interpretando como usuario no encontrado.");
-                                return response.bodyToMono(String.class)
-                                        .flatMap(body -> {
-                                            log.warn("[RestConsumer.verify] Respuesta de error: {}", body);
-                                            return Mono.error(new IllegalArgumentException(
-                                                    Messages.DATA_USER_NOT_EXIST
-                                            ));
-                                        });
-                            })
-                            .bodyToMono(UserExistResponseDto.class)
-                            .doOnSubscribe(sub -> log.info("[RestConsumer.verify] Request enviado a /api/v1/users/exist"))
-                            .doOnNext(resp -> log.info("[RestConsumer.verify] Respuesta recibida: success={}", resp.isSuccess()))
-                            .map(UserExistResponseDto::isSuccess)
-                            .onErrorResume(IllegalArgumentException.class, ex -> {
-                                log.warn("[RestConsumer.verify] Usuario no encontrado → {}", ex.getMessage());
-                                return Mono.just(false);
-                            })
-                            .doOnError(err -> log.error("[RestConsumer.verify] Error al consumir /api/v1/users/exist", err));
-                });
+                .flatMap(token -> client.post()
+                        .uri("/api/v1/users/exist")
+                        .header("Authorization", "Bearer " + token)
+                        .bodyValue(request)
+                        .retrieve()
+                        .onStatus(status -> status.is4xxClientError(), response -> {
+                            log.warn("[RestConsumer.verify] La API devolvió 4xx → usuario no encontrado.");
+                            return response.bodyToMono(String.class)
+                                    .flatMap(body -> Mono.error(new IllegalArgumentException(
+                                            Messages.DATA_USER_NOT_EXIST
+                                    )));
+                        })
+                        .bodyToMono(UserExistResponseDto.class)
+                        .doOnNext(resp -> log.info("[RestConsumer.verify] Respuesta recibida: success={}, baseSalary={}",
+                                resp.isSuccess(),
+                                resp.getData() != null ? resp.getData().getBaseSalary() : null
+                        ))
+                        .map(resp -> {
+                            if (resp.isSuccess() && resp.getData() != null && resp.getData().isExists()) {
+                                return resp.getData().getBaseSalary();
+                            }
+                            throw new IllegalArgumentException(Messages.DATA_USER_NOT_EXIST);
+                        })
+                        .onErrorResume(IllegalArgumentException.class, ex -> {
+                            log.warn("[RestConsumer.verify] Usuario no encontrado → {}", ex.getMessage());
+                            return Mono.just(BigDecimal.ZERO); // default cuando no existe
+                        })
+                );
     }
+
 
     @Override
     @CircuitBreaker(name = "usuarios")
