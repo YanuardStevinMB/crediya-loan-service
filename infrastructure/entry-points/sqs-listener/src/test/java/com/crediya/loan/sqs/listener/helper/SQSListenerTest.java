@@ -1,9 +1,8 @@
 package com.crediya.loan.sqs.listener.helper;
 
-import com.crediya.loan.model.application.AnswersApplicationSqs;
 import com.crediya.loan.sqs.listener.SQSProcessor;
 import com.crediya.loan.sqs.listener.config.SQSProperties;
-import com.crediya.loan.usecase.calculateborrowingcapacity.UpdateValidatedRequest;
+import com.crediya.loan.usecase.calculateborrowingcapacity.UpdateValidatedRequestUseCase;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,7 +33,7 @@ class SQSListenerTest {
     private SQSProperties sqsProperties;
 
     @Mock
-    private UpdateValidatedRequest updateValidatedRequest;
+    private UpdateValidatedRequestUseCase updateValidatedRequest;
 
     private ObjectMapper objectMapper;
 

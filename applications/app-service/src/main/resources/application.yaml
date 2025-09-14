@@ -52,6 +52,7 @@ adapter:
   restconsumer:
     url: "http://localhost:8081"
     timeout: 5000
+
   sqs:
     region: "us-east-2"
     queueUrl: "https://sqs.us-east-2.amazonaws.com/889522049804/loan-notification-email-queue"
@@ -88,6 +89,7 @@ resilience4j:
         slidingWindowSize: 10
         minimumNumberOfCalls: 10
         waitDurationInOpenState: "10s"
+
 entrypoint:
   sqs:
     region: "us-east-2"

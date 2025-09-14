@@ -2,6 +2,7 @@ package com.crediya.loan.model.application.gateways;
 
 import com.crediya.loan.model.application.Application;
 import com.crediya.loan.model.application.ApplicationApproved;
+import com.crediya.loan.model.calculateborrowingcapacity.AnswersApplicationSqs;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
@@ -16,4 +17,7 @@ public interface BorrowingCapacitySender {
                                        BigDecimal baseSalary,
                                        List<ApplicationApproved> approvedLoans,
                                        List<Map<String, Object>> activeLoans);
+
+        Mono<String> sendRequestNotification(AnswersApplicationSqs msg);
+
 }

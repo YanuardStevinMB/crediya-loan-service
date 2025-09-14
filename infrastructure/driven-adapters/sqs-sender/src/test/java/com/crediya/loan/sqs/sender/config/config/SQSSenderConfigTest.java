@@ -1,7 +1,7 @@
 package com.crediya.loan.sqs.sender.config.config;
 
 import com.crediya.loan.sqs.sender.config.SQSSenderConfig;
-import com.crediya.loan.sqs.sender.config.SQSSenderProperties;
+import com.crediya.loan.sqs.sender.config.SQSStatusChangeProperties;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import software.amazon.awssdk.metrics.MetricPublisher;
@@ -17,7 +17,7 @@ class SQSSenderConfigTest {
 
     @Test
     void configSqs_shouldBuildClient_withCustomEndpoint() {
-        SQSSenderProperties props = new SQSSenderProperties(
+        SQSStatusChangeProperties props = new SQSStatusChangeProperties(
                 "us-east-1",
                 "queue-url",               // queueUrl dummy
                 "http://localhost:4566"    // endpoint correcto
@@ -33,7 +33,7 @@ class SQSSenderConfigTest {
 
     @Test
     void configSqs_shouldBuildClient_withNullEndpoint() {
-        SQSSenderProperties props = new SQSSenderProperties(
+        SQSStatusChangeProperties props = new SQSStatusChangeProperties(
                 "us-west-2",
                 "queue-url",   // siempre hay que pasarlo, aunque sea dummy
                 null           // endpoint = null

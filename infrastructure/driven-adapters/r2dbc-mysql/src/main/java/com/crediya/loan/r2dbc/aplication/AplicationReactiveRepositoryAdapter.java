@@ -54,9 +54,7 @@ public class AplicationReactiveRepositoryAdapter extends ReactiveAdapterOperatio
     @Override
     public Mono<Application> save(Application application) {
         ApplicationEntity entity = aplicationEntityMapper.toEntity(application);
-
         return repository.save(entity)
-                // 3) Mapear de vuelta a dominio
                 .map(aplicationEntityMapper::toDomain)
                 .doOnSuccess(saved -> log.info("[application.save] id={} email={} stateId={}",
                         saved.getId(), saved.getEmail(), saved.getStateId()))
@@ -115,7 +113,6 @@ public class AplicationReactiveRepositoryAdapter extends ReactiveAdapterOperatio
                     }
                     return dto;
                 })
-                // MapStruct/manual: DTO -> Domain
                 .map(applicationDataCompletedMapper::toDomain);
     }
 

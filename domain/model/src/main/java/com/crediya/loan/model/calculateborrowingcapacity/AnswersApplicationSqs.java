@@ -1,7 +1,8 @@
-package com.crediya.loan.sqs.listener.dto;
+package com.crediya.loan.model.calculateborrowingcapacity;
 
+import com.crediya.loan.model.calculateborrowingcapacity.Installment;
+import com.crediya.loan.model.calculateborrowingcapacity.Totals;
 import lombok.*;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
@@ -10,22 +11,21 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@JsonIgnoreProperties(ignoreUnknown = true)
-public class AnswersApplicationSqsDto {
+public class AnswersApplicationSqs {
     private Long id;
     private String identityDocument;
     private String status;
     private String statusCode;
     private String requestId;
-    private String emailClient;
+    private String clientEmail;
 
     private BigDecimal cuotaNueva;
     private BigDecimal capacidadDisponible;
     private BigDecimal interesMensual;
     private Integer plazoMeses;
 
-    private List<InstallmentDto> paymentPlan;
-    private TotalsDto totales;
+    private List<Installment> paymentPlan;
+    private Totals totales;
 
     private Instant decidedAt;
 }

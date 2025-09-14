@@ -109,7 +109,7 @@ public interface AplicationReactiveRepository  extends ReactiveCrudRepository<Ap
         TIMESTAMPDIFF(MONTH, CURDATE(), s.plazo) AS plazo
     FROM solicitud s
     INNER JOIN tipo_prestamo tp ON s.id_tipo_prestamo = tp.id_tipo_prestamo
-    INNER JOIN estados e        ON e.id_estado        = s.id_estado
+    INNER JOIN estados e       ON e.id_estado        = s.id_estado
     WHERE s.documento_identidad = :identityDocument  
       AND s.id_estado = 2
     """)

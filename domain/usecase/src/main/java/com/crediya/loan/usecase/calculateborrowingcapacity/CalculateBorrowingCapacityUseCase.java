@@ -19,21 +19,19 @@ public class CalculateBorrowingCapacityUseCase {
     private final BorrowingCapacitySender borrowingCapacitySender;
 
     public Mono<Application> execute(Application app, BigDecimal baseSalary) {
-        LOG.info(() -> "⚡ Ejecutando cálculo de capacidad de endeudamiento para solicitud id="
-                + app.getId() + " salario=" + baseSalary);
+        LOG.info(() -> "⚡ Ejecutando cálculo de capacidad de endeudamiento para solicitud id="  + app.getId() + " salario=" + baseSalary);
 
         return applicationRepository.approvedApplications(app.getIdentityDocument())
-                .collectList() // juntamos todos los préstamos aprobados en una lista
-                .flatMap(approvedList -> {
-                    if (approvedList.isEmpty()) {
-                        LOG.warning("⚠ No se encontraron préstamos aprobados para identity=" + app.getIdentityDocument());
-                        return Mono.just(app);
-                    }
+            .collectList()
+            .flatMap(approvedList -> {
+                if (approvedList.isEmpty()) {
+                    LOG.warning("⚠ No se encontraron préstamos aprobados para identity=" + app.getIdentityDocument());
+                }
 
-                    return borrowingCapacitySender.sendBorrowingCapacity(app, baseSalary, approvedList, Collections.emptyList())
-                            .doOnNext(msgId -> LOG.info("[SQS] ✅ Mensaje enviado con ID=" + msgId))
-                            .thenReturn(app);
-                });
+                return borrowingCapacitySender.sendBorrowingCapacity(app, baseSalary, approvedList, Collections.emptyList())
+                    .doOnNext(msgId -> LOG.info("[SQS] ✅ Mensaje enviado con ID=" + msgId))
+                    .thenReturn(app);
+            });
     }
 
 }

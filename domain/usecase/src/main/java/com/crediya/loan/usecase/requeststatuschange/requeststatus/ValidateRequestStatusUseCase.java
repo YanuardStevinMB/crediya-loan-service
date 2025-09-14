@@ -54,8 +54,7 @@ public class ValidateRequestStatusUseCase {
                             ? Mono.<Void>empty()
                             : Mono.error(new ConfigurationException(Messages.INVALID_STATE));
                 })
-                .doOnSuccess(v -> LOG.fine(() ->
-                        "[ValidateRequestStatus] Estado permitido id=" + request.getStateId()));
+                .doOnSuccess(v -> LOG.fine(() -> "[ValidateRequestStatus] Estado permitido id=" + request.getStateId()));
 
         return Mono.when(applicationOk, stateOk)
                 .thenReturn(true);

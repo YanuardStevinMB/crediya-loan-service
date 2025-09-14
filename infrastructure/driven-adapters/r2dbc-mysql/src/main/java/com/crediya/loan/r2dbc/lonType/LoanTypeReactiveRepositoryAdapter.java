@@ -1,5 +1,4 @@
-package com.crediya.loan.r2dbc.loantype; // 👈 corrige el paquete
-
+package com.crediya.loan.r2dbc.lonType;
 import com.crediya.loan.model.loantype.LoanType;
 import com.crediya.loan.model.loantype.gateways.LoanTypeRepository;
 import com.crediya.loan.r2dbc.entity.LoanTypeEntity;
@@ -20,7 +19,7 @@ public class LoanTypeReactiveRepositoryAdapter extends ReactiveAdapterOperations
         > implements LoanTypeRepository {
 
     private final LoanTypeReactiveRepository repository;
-    private final ObjectMapper mapper; // 👈 guardamos el mapper para usarlo aquí
+    private final ObjectMapper mapper;
 
     public LoanTypeReactiveRepositoryAdapter(LoanTypeReactiveRepository repository,
                                              ObjectMapper mapper) {
@@ -32,13 +31,13 @@ public class LoanTypeReactiveRepositoryAdapter extends ReactiveAdapterOperations
 
     @Override
     public Mono<LoanType> findById(Long id) {
-        return repository.findById(id)                   // Mono<LoanTypeEntity>
+        return repository.findById(id)
                 .doOnSubscribe(sub -> log.debug("[loanType.findById] Suscrito para id={}", id))
-                .switchIfEmpty(Mono.defer(() -> {        // 👈 mantiene el tipo, solo loggea
+                .switchIfEmpty(Mono.defer(() -> {
                     log.warn("[loanType.findById] No se encontró id={}", id);
                     return Mono.empty();
                 }))
-                .map(entity -> mapper.map(entity, LoanType.class)) // 👈 mapeo a dominio
+                .map(entity -> mapper.map(entity, LoanType.class))
                 .doOnNext(lt -> log.debug("[loanType.findById] Se encontró: id={} nombre={}", id, lt.getName()))
                 .doOnError(err -> log.error("[loanType.findById] Error al buscar id={}: {}", id, err.toString()));
     }

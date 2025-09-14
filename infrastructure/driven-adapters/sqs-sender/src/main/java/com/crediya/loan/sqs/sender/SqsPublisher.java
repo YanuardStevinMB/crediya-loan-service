@@ -21,11 +21,10 @@ public class SqsPublisher {
         SendMessageRequest.Builder builder = SendMessageRequest.builder()
                 .queueUrl(queueUrl)
                 .messageBody(message);
-
+        log.info("[SqsPublisher] 📩 Mensaje recibido body={}", message);
         if (attrs != null && !attrs.isEmpty()) {
             builder.messageAttributes(attrs);
         }
-
         return Mono.fromFuture(client.sendMessage(builder.build()))
                 .map(res -> {
                     if (!res.sdkHttpResponse().isSuccessful()) {

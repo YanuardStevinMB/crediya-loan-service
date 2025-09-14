@@ -3,7 +3,6 @@ package com.crediya.loan.sqs.sender.config;
 import com.crediya.loan.model.application.ApplicationDataCompleted;
 import com.crediya.loan.sqs.sender.SqsPublisher;
 import com.crediya.loan.sqs.sender.StatusChangeSqsAdapter;
-import com.crediya.loan.sqs.sender.config.SQSSenderProperties;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,7 +30,7 @@ class StatusChangeSqsAdapterTest {
     private SqsPublisher publisher;
 
     @Mock
-    private SQSSenderProperties properties;
+    private SQSStatusChangeProperties properties;
 
     private ObjectMapper objectMapper;
     private StatusChangeSqsAdapter adapter;

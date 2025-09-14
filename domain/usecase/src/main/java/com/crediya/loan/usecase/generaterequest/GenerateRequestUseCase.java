@@ -33,7 +33,7 @@ public class GenerateRequestUseCase {
             ApplicationValidator.validateAndNormalize(app); // Validación in-memory
             LOG.fine("GenerateRequestUseCase.execute() - inicio");
 
-            return verifyUser(app) // devuelve Mono<BigDecimal> (baseSalary)
+            return verifyUser(app)
                     .flatMap(baseSalary ->
                             validateLoanType(app) // valida el LoanType
                                     .then(assignInitialStateAndSave(app, baseSalary)) // guarda y dispara flujo automático
@@ -42,7 +42,6 @@ public class GenerateRequestUseCase {
                     .doOnSuccess(ok -> LOG.fine("GenerateRequestUseCase.execute() - éxito"));
         });
     }
-
 
 
 
@@ -61,6 +60,7 @@ public class GenerateRequestUseCase {
     }
 
     private Mono<Application> assignInitialStateAndSave(Application app, BigDecimal baseSalary) {
+
         return statesRepository.findByCode(DataValidation.PENDING_STATUS_CODE)
                 .switchIfEmpty(Mono.error(
                         new ConfigurationException(Messages.stateNotFound(DataValidation.PENDING_STATUS_CODE))
@@ -71,14 +71,12 @@ public class GenerateRequestUseCase {
 
                     return applicationRepository.save(app)
                             .flatMap(saved -> {
-                                LOG.info(() -> "Solicitud creada id=" + saved.getId()
-                                        + ", state=" + state.getCode());
-
+                                LOG.info(() -> "Solicitud creada id=" + saved.getId() + ", state=" + state.getCode());
                                 return loanTypeRepository.findById(saved.getLoanTypeId())
                                         .flatMap(loanType -> {
                                             if (loanType.getAutomaticValidation()) {
-                                                LOG.fine("LoanType con bajo riesgo → invocando cálculo automático");
-                                                return calculateBorrowingCapacityUseCase.execute(saved,baseSalary);
+                                                LOG.fine("LoanType  invocando cálculo automático");
+                                                    return calculateBorrowingCapacityUseCase.execute(saved,baseSalary);
                                             }
                                             LOG.fine("LoanType con alto riesgo → no se dispara cálculo automático");
                                             return Mono.just(saved);

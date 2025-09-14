@@ -1,7 +1,8 @@
 package com.crediya.loan.sqs.listener;
 
-import com.crediya.loan.model.application.AnswersApplicationSqs;
-import com.crediya.loan.usecase.calculateborrowingcapacity.UpdateValidatedRequest;
+import com.crediya.loan.sqs.listener.dto.AnswersApplicationSqsDto;
+import com.crediya.loan.sqs.listener.mapper.AnswersApplicationSqsMapper;
+import com.crediya.loan.usecase.calculateborrowingcapacity.UpdateAutomaticStatusUseCase;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,25 +17,23 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public class SQSProcessor implements Function<Message, Mono<Void>> {
 
-    private final UpdateValidatedRequest updateValidatedRequest;
+    private final UpdateAutomaticStatusUseCase updateAutomaticStatus;
     private final ObjectMapper objectMapper;
 
     @Override
     public Mono<Void> apply(Message message) {
         return Mono.fromCallable(() -> {
-            System.out.println(message.body());
-                    // mapear directamente el JSON al DTO
-                    AnswersApplicationSqs dto = objectMapper.readValue(
-                            message.body(),
-                            AnswersApplicationSqs.class
-                    );
-
-                    log.info("[SQSProcessor] Mensaje recibido → id={} code={}", dto.getId(), dto.getStatusCode());
+                    AnswersApplicationSqsDto dto = objectMapper.readValue(message.body(), AnswersApplicationSqsDto.class);
+                    log.info("[SQSProcessor] Mensaje recibido body={}", message.body());
                     return dto;
                 })
-                .flatMap(updateValidatedRequest::execute) // invocamos al caso de uso
-                .doOnSuccess(r -> log.info("[SQSProcessor] ✅ Procesado correctamente"))
-                .doOnError(e -> log.error("[SQSProcessor] ❌ Error procesando mensaje", e))
-                .then(); // Mono<Void>
+                .map(AnswersApplicationSqsMapper::toDomain)
+                .flatMap(updateAutomaticStatus::execute)
+                .doOnSuccess(v -> log.info("[SQSProcessor] Procesado correctamente id={}", message.messageId()))
+                .onErrorResume(e -> {
+                    log.error("[SQSProcessor]  Error procesando mensaje. body={}", message.body(), e);
+                    return Mono.empty();
+                })
+                .then();
     }
 }

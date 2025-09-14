@@ -2,7 +2,7 @@ package com.crediya.loan.sqs.sender;
 
 import com.crediya.loan.model.application.ApplicationDataCompleted;
 import com.crediya.loan.model.application.gateways.ApplicationSenderSqs;
-import com.crediya.loan.sqs.sender.config.SQSSenderProperties;
+import com.crediya.loan.sqs.sender.config.SQSStatusChangeProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -14,36 +14,39 @@ import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
 
+import static com.crediya.loan.usecase.shared.StatusChangeConstants.*;
+
+
 @Service
 @RequiredArgsConstructor
 public class StatusChangeSqsAdapter implements ApplicationSenderSqs {
 
     private final SqsPublisher publisher;
-    private final SQSSenderProperties properties;
+    private final SQSStatusChangeProperties properties;
     private final ObjectMapper objectMapper;
 
     @Override
     public Mono<String> sendStatusChange(ApplicationDataCompleted app) {
-        // Armamos el requestId con el año y el ID de la solicitud
-        String requestId = String.format("SOL-%d-%06d",
+        // RequestId: año + ID solicitud
+        String requestId = String.format(REQUEST_ID_PATTERN,
                 Year.now().getValue(),
                 app.getId() == null ? 0 : app.getId());
 
-        // Normalizamos el estado
-        String statusUpper = app.getState() == null ? "" : app.getState().toUpperCase(Locale.ROOT);
+        // Normalizar estado
+        String statusUpper = app.getState() == null ? "" : app.getState().toUpperCase(NORMALIZE_LOCALE);
         String normalizedStatus =
-                ("APROBADO".equals(statusUpper) || "APROBADA".equals(statusUpper)) ? "APROBADO" :
-                        ("RECHAZADO".equals(statusUpper) || "RECHAZADA".equals(statusUpper)) ? "RECHAZADO" :
+                (STATUS_APROBADO.equals(statusUpper) || "APROBADA".equals(statusUpper)) ? STATUS_APROBADO :
+                        (STATUS_RECHAZADO.equals(statusUpper) || "RECHAZADA".equals(statusUpper)) ? STATUS_RECHAZADO :
                                 statusUpper;
 
-        // Mensaje personalizado
+        // Mensaje personalizado por estado
         String customMessage = switch (normalizedStatus) {
-            case "APROBADO" -> "Su desembolso estará disponible en las próximas 24 horas.";
-            case "RECHAZADO" -> "Su solicitud fue rechazada. Puede volver a aplicar en 30 días.";
-            default -> "El estado de su solicitud ha sido actualizado.";
+            case STATUS_APROBADO  -> MSG_ON_APROBADO;
+            case STATUS_RECHAZADO -> MSG_ON_RECHAZADO;
+            default               -> MSG_ON_UPDATED;
         };
 
-        // Payload final
+        // Payload
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("requestId", requestId);
         payload.put("status", normalizedStatus);
@@ -57,15 +60,19 @@ public class StatusChangeSqsAdapter implements ApplicationSenderSqs {
         try {
             json = objectMapper.writeValueAsString(payload);
         } catch (Exception e) {
-            return Mono.error(new IllegalStateException("Error serializando payload", e));
+            return Mono.error(new IllegalStateException(ERR_SERIALIZING_PAYLOAD, e));
         }
 
-        // Enviamos con correlación = requestId
-        return publisher.publish(properties.queueUrl(), json, Map.of(
-                "X-Correlation-Id", MessageAttributeValue.builder()
-                        .dataType("String")
-                        .stringValue(requestId)
-                        .build()
-        ));
+        // Publicar con correlación
+        return publisher.publish(
+                properties.queueUrl(),
+                json,
+                Map.of(
+                        ATTR_CORRELATION_ID, MessageAttributeValue.builder()
+                                .dataType(ATTR_DATA_TYPE_STRING)
+                                .stringValue(requestId)
+                                .build()
+                )
+        );
     }
 }
