@@ -5,6 +5,7 @@ import com.crediya.loan.model.application.gateways.ApplicationRepository;
 import com.crediya.loan.model.application.gateways.BorrowingCapacitySender;
 import com.crediya.loan.model.calculateborrowingcapacity.AnswersApplicationSqs;
 import com.crediya.loan.model.states.gateways.StatesRepository;
+import com.crediya.loan.usecase.applicationupdate.ApplicationUpdateUseCase;
 import com.crediya.loan.usecase.shared.ConfigurationException;
 import com.crediya.loan.usecase.shared.Messages;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,9 @@ public class UpdateAutomaticStatusUseCase {
     private final StatesRepository statesRepository;
     private final ApplicationRepository applicationRepository;
     private final BorrowingCapacitySender answerSender;
+    private final ApplicationUpdateUseCase applicationUpdateUseCase;
+
+
 
     public Mono<Void> execute(AnswersApplicationSqs msg) {
         if (msg.getId() == null || msg.getStatusCode() == null) {
@@ -35,11 +39,12 @@ public class UpdateAutomaticStatusUseCase {
                             .stateId(state.getId())
                             .build();
                     LOG.info(() -> String.format("[UpdateAutomaticStatusUseCase] Actualizando estado id=%s → stateId=%s", msg.getId(), state.getId()));
-                    return applicationRepository.requestStatusChange(update)
+                    return  applicationUpdateUseCase.execute(update)
                             .doOnSuccess(dto ->
                                     LOG.info(() -> String.format( "[UpdateAutomaticStatusUseCase] UPDATE OK id=%s stateId=%s",dto.getId(), dto.getStateId()))
                             )
                             .flatMap(dto -> publishIfNotFinal(msg));
+
                 });
     }
 

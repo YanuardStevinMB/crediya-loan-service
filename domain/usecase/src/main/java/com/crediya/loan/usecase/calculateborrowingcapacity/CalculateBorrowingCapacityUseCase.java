@@ -29,7 +29,7 @@ public class CalculateBorrowingCapacityUseCase {
                 }
 
                 return borrowingCapacitySender.sendBorrowingCapacity(app, baseSalary, approvedList, Collections.emptyList())
-                    .doOnNext(msgId -> LOG.info("[SQS] ✅ Mensaje enviado con ID=" + msgId))
+                    .doOnNext(msgId -> LOG.info("[SQS] Mensaje enviado con ID=" + msgId))
                     .thenReturn(app);
             });
     }

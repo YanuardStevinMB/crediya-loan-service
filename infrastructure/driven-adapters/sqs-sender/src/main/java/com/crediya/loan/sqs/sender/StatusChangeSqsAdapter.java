@@ -17,8 +17,8 @@ import java.util.Map;
 import static com.crediya.loan.usecase.shared.StatusChangeConstants.*;
 
 
-@Service
-@RequiredArgsConstructor
+    @Service
+    @RequiredArgsConstructor
 public class StatusChangeSqsAdapter implements ApplicationSenderSqs {
 
     private final SqsPublisher publisher;

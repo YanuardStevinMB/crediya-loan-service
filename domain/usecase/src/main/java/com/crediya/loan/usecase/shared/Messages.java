@@ -80,4 +80,11 @@ public final class Messages {
     public static String stateNotFound(String code) {
         return "El estado inicial '" + code + "' no existe";
     }
+
+    // =========================
+    // Evento / Reporting
+    // =========================
+
+    public static final String NOT_FOUND_ENVENT= "Error serializando CloudEvent";
+
 }

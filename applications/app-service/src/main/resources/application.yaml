@@ -49,17 +49,21 @@ adapters:
     username: "solicitudes"
     password: "solicitudes_secure_2025"
 adapter:
+
+# servicios externos
   restconsumer:
     url: "http://localhost:8081"
     timeout: 5000
-
+# sqs servicios
   sqs:
     region: "us-east-2"
     queueUrl: "https://sqs.us-east-2.amazonaws.com/889522049804/loan-notification-email-queue"
   sqsborrowing:
     region: "us-east-2"
     queueUrl: "https://sqs.us-east-2.amazonaws.com/889522049804/calculate-borrowing-capacity-queue"
-
+  sqsreporting:
+    region: "us-east-2"
+    queueUrl: "https://sqs.us-east-2.amazonaws.com/889522049804/generate-reports-queue"
 
 
 
@@ -68,6 +72,7 @@ security:
   expiration-sec: 3600
   issuer: "autenticacion-service"
   issuer-uri: ""
+
 resilience4j:
   circuitbreaker:
     instances:
