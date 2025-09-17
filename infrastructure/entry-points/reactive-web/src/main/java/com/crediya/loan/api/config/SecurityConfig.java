@@ -35,7 +35,7 @@ public class SecurityConfig {
                                 "/swagger-ui/**",
                                 "/webjars/**",
                                 "/actuator/**").permitAll()
-                        .pathMatchers(HttpMethod.PUT, "/api/v1/application/update-state").permitAll()
+                        .pathMatchers(HttpMethod.PUT, "/api/v1/application/update-state").hasAnyRole("ADMIN","ASESOR")
 
                         // Regla de lisdatod e solicitudes
                         .pathMatchers(HttpMethod.GET, "/api/v1/application/pending").hasAnyRole("ADMIN","ASESOR")

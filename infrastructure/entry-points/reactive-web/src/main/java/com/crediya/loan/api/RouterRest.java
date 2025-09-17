@@ -5,6 +5,8 @@ import com.crediya.loan.api.dto.ApplicationPaginedDto;
 import com.crediya.loan.api.dto.ApplicationResponseDto;
 import com.crediya.loan.api.dto.ApplicationSaveDto;
 import com.crediya.loan.api.dto.ApplicationUpdateStateDto;
+import com.crediya.loan.api.dto.ErrorResponseDto;
+import com.crediya.loan.api.handler.GlobalExceptionHandler;
 import com.crediya.loan.usecase.shared.PagindData;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -45,6 +47,16 @@ public class RouterRest {
                                             responseCode = "200",
                                             description = "OK",
                                             content = @Content(schema = @Schema(implementation = ApplicationResponseDto.class))
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "400",
+                                            description = "Error de validación",
+                                            content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "500",
+                                            description = "Error interno del servidor",
+                                            content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
                                     )
                             }
                     )
@@ -69,6 +81,16 @@ public class RouterRest {
                                             responseCode = "200",
                                             description = "OK",
                                             content = @Content(schema = @Schema(implementation = ApplicationPaginedDto.class))
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "400",
+                                            description = "Parámetros inválidos",
+                                            content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "500",
+                                            description = "Error interno del servidor",
+                                            content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
                                     )
                             }
                     )
@@ -90,6 +112,21 @@ public class RouterRest {
                                             responseCode = "200",
                                             description = "OK",
                                             content = @Content(schema = @Schema(implementation = ApplicationResponseDto.class))
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "400",
+                                            description = "Error de validación",
+                                            content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "404",
+                                            description = "Solicitud no encontrada",
+                                            content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
+                                    ),
+                                    @ApiResponse(
+                                            responseCode = "500",
+                                            description = "Error interno del servidor",
+                                            content = @Content(schema = @Schema(implementation = ErrorResponseDto.class))
                                     )
                             }
                     )
@@ -97,11 +134,11 @@ public class RouterRest {
     })
     public RouterFunction<ServerResponse> routerFunction(
             ApplicationHandler handler,
-            ApiErrorFilter errorFilter
+            GlobalExceptionHandler globalExceptionHandler
     ) {
         return route(POST("/api/v1/application"), handler::createApplication)
                 .andRoute(GET("/api/v1/application/pending"), handler::findApplications)
                 .andRoute(PUT("/api/v1/application/update-state"), handler::updateRequestStatus)
-                .filter(errorFilter);
+                .filter(globalExceptionHandler);
     }
 }
