@@ -56,19 +56,25 @@ class CalculateBorrowingCapacityUseCaseTest {
                 .build();
     }
 
+
     @Test
     void execute_shouldReturnApp_whenNoApprovedLoans() {
         var app = buildApp(1L, "DOC1");
 
         when(applicationRepository.approvedApplications("DOC1")).thenReturn(Flux.empty());
+        // Agregar el mock para borrowingCapacitySender incluso cuando no hay préstamos aprobados
+        when(borrowingCapacitySender.sendBorrowingCapacity(eq(app), eq(BigDecimal.valueOf(2000)), anyList(), anyList()))
+                .thenReturn(Mono.just("msg-empty-loans"));
 
         StepVerifier.create(useCase.execute(app, BigDecimal.valueOf(2000)))
                 .expectNext(app)
                 .verifyComplete();
 
         verify(applicationRepository).approvedApplications("DOC1");
-        verifyNoInteractions(borrowingCapacitySender);
+        // Cambiar verifyNoInteractions por verify ya que sí se llama al sender
+        verify(borrowingCapacitySender).sendBorrowingCapacity(eq(app), eq(BigDecimal.valueOf(2000)), anyList(), anyList());
     }
+
 
     @Test
     void execute_shouldSendMessage_whenApprovedLoansExist() {

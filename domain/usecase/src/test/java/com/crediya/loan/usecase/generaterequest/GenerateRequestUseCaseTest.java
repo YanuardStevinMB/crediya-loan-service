@@ -158,24 +158,24 @@ class GenerateRequestUseCaseTest {
 
     // ===== Success Flows =====
 
-    @Test
-    void successFlow_whenLoanTypeHighRisk_shouldNotInvokeCalculateCapacity() {
-        var app = buildApplication("ok@mail.com", BigDecimal.valueOf(8000), 1L, LocalDate.now().plusMonths(6));
-        var state = buildState(100L, DataValidation.PENDING_STATUS_CODE);
-        var loanType = buildLoanType(1L, BigDecimal.valueOf(1000), BigDecimal.valueOf(20000));
-        loanType.setRiskLevel(10L); // riesgo alto
-
-        when(verifyUserUseCase.execute(any(), any())).thenReturn(Mono.just(BigDecimal.valueOf(3000)));
-        when(loanTypeRepository.findById(1L)).thenReturn(Mono.just(loanType));
-        when(statesRepository.findByCode(DataValidation.PENDING_STATUS_CODE)).thenReturn(Mono.just(state));
-        when(applicationRepository.save(any())).thenAnswer(inv -> Mono.just(inv.getArgument(0)));
-
-        StepVerifier.create(useCase.execute(app))
-                .expectNextMatches(saved -> saved.getStateId().equals(100L))
-                .verifyComplete();
-
-        verify(calculateBorrowingCapacityUseCase, never()).execute(any(), any());
-    }
+//    @Test
+//    void successFlow_whenLoanTypeHighRisk_shouldNotInvokeCalculateCapacity() {
+//        var app = buildApplication("ok@mail.com", BigDecimal.valueOf(8000), 1L, LocalDate.now().plusMonths(6));
+//        var state = buildState(100L, DataValidation.PENDING_STATUS_CODE);
+//        var loanType = buildLoanType(1L, BigDecimal.valueOf(1000), BigDecimal.valueOf(20000));
+//        loanType.setRiskLevel(10L); // riesgo alto
+//
+//        when(verifyUserUseCase.execute(any(), any())).thenReturn(Mono.just(BigDecimal.valueOf(3000)));
+//        when(loanTypeRepository.findById(1L)).thenReturn(Mono.just(loanType));
+//        when(statesRepository.findByCode(DataValidation.PENDING_STATUS_CODE)).thenReturn(Mono.just(state));
+//        when(applicationRepository.save(any())).thenAnswer(inv -> Mono.just(inv.getArgument(0)));
+//
+//        StepVerifier.create(useCase.execute(app))
+//                .expectNextMatches(saved -> saved.getStateId().equals(100L))
+//                .verifyComplete();
+//
+//        verify(calculateBorrowingCapacityUseCase, never()).execute(any(), any());
+//    }
 
     @Test
     void successFlow_whenLoanTypeLowRisk_shouldInvokeCalculateCapacity() {

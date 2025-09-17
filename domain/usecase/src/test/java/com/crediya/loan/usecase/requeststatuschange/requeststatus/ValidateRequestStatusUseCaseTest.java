@@ -123,6 +123,7 @@ class ValidateRequestStatusUseCaseTest {
         when(applicationRepository.findById(1L)).thenReturn(Mono.just(dummyApp));
         when(statesRepository.findById(10L)).thenReturn(Mono.just(validState));
 
+        // Forzar la ejecución de ambos callbacks (doOnNext y doOnSuccess) 
         StepVerifier.create(useCase.execute(request))
                 .expectNext(true)
                 .verifyComplete();
@@ -138,6 +139,59 @@ class ValidateRequestStatusUseCaseTest {
         when(applicationRepository.findById(2L)).thenReturn(Mono.just(dummyApp));
         when(statesRepository.findById(20L)).thenReturn(Mono.just(validState));
 
+        // Forzar la ejecución de ambos callbacks (doOnNext y doOnSuccess)
+        StepVerifier.create(useCase.execute(request))
+                .expectNext(true)
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldCoverAllCallbacks_withCompleteValidation() {
+        // Test específico para asegurar cobertura completa de doOnNext y doOnSuccess
+        var request = new RequestStatusUpdate(123L, 456L);
+
+        var dummyApp = Application.builder()
+                .id(123L)
+                .email("coverage@test.com")
+                .identityDocument("COV-123")
+                .build();
+        var validState = States.builder()
+                .id(456L)
+                .code(DataValidation.APROB_STATUS_CODE)
+                .name("Aprobado")
+                .build();
+
+        when(applicationRepository.findById(123L)).thenReturn(Mono.just(dummyApp));
+        when(statesRepository.findById(456L)).thenReturn(Mono.just(validState));
+
+        // Este test debe cubrir:
+        // - applicationRepository.findById() -> doOnNext callback (línea 43)
+        // - statesRepository.findById() -> flatMap + doOnSuccess callback (línea 57)
+        StepVerifier.create(useCase.execute(request))
+                .expectNext(true)
+                .verifyComplete();
+    }
+
+    @Test
+    void shouldCoverCallbacks_withRejectedStatus() {
+        // Test adicional para asegurar cobertura de doOnSuccess con RECH_STATUS_CODE
+        var request = new RequestStatusUpdate(789L, 321L);
+
+        var dummyApp = Application.builder()
+                .id(789L)
+                .email("rejected@test.com")
+                .identityDocument("REJ-789")
+                .build();
+        var rejectedState = States.builder()
+                .id(321L)
+                .code(DataValidation.RECH_STATUS_CODE)
+                .name("Rechazado")
+                .build();
+
+        when(applicationRepository.findById(789L)).thenReturn(Mono.just(dummyApp));
+        when(statesRepository.findById(321L)).thenReturn(Mono.just(rejectedState));
+
+        // Este test debe cubrir el callback doOnSuccess para estado RECHAZADO
         StepVerifier.create(useCase.execute(request))
                 .expectNext(true)
                 .verifyComplete();
