@@ -1,0 +1,7 @@
+{
+  "amount": 50000,
+  "term": 24,
+  "email": "test@example.com",
+  "identityDocument": "123456789",
+  "loanTypeId": 1
+}

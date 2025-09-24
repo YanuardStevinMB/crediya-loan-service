@@ -1,0 +1,34 @@
+# VCS
+.git
+.git/
+.gitignore
+
+# Gradle caches and build outputs
+.gradle/
+**/.gradle/**
+**/build/**
+build/
+out/
+target/
+
+# Logs
+logs/
+logs/**
+*.log
+
+# IDE/editor
+.idea/
+.vscode/
+
+# Node/npm (if any)
+node_modules/
+**/node_modules/**
+
+# OS
+.DS_Store
+
+# Env files (not needed in build context)
+.env
+
+# Misc
+deployment/*.jar

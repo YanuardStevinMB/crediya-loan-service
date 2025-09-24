@@ -16,6 +16,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.math.BigDecimal;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -24,7 +25,6 @@ public class RestConsumer implements UserManagementGateway {
 
     private final WebClient client;
     private final UserLoadMapper userLoadMapper;
-
 
     @Override
     @CircuitBreaker(name = "userExist")
@@ -48,7 +48,35 @@ public class RestConsumer implements UserManagementGateway {
                                             Messages.DATA_USER_NOT_EXIST
                                     )));
                         })
-                        .bodyToMono(UserExistResponseDto.class)
+                        // 👇 Leer como Map y poblar UserExistResponseDto manualmente
+                        .bodyToMono(Map.class)
+                        .map(raw -> {
+                            UserExistResponseDto resp = new UserExistResponseDto();
+                            resp.setSuccess((Boolean) raw.get("success"));
+                            resp.setMessage((String) raw.get("message"));
+                            resp.setErrors(raw.get("errors"));
+                            resp.setPath((String) raw.get("path"));
+                            resp.setTimestamp((String) raw.get("timestamp"));
+
+                            Object dataObj = raw.get("data");
+                            UserExistResponseDto.Data data = new UserExistResponseDto.Data();
+
+                            if (dataObj instanceof Number) {
+                                // Caso IAM devuelve plano → "data": 2500000
+                                data.setExists(true);
+                                data.setBaseSalary(new BigDecimal(dataObj.toString()));
+                            } else if (dataObj instanceof Map<?, ?> map) {
+                                // Caso IAM devuelva objeto → "data": { "exists": true, "baseSalary": 2500000 }
+                                Object existsObj = map.get("exists");
+                                Object salaryObj = map.get("baseSalary");
+
+                                data.setExists(existsObj != null && Boolean.parseBoolean(existsObj.toString()));
+                                data.setBaseSalary(salaryObj != null ? new BigDecimal(salaryObj.toString()) : null);
+                            }
+
+                            resp.setData(data);
+                            return resp;
+                        })
                         .doOnNext(resp -> log.info("[RestConsumer.verify] Respuesta recibida: success={}, baseSalary={}",
                                 resp.isSuccess(),
                                 resp.getData() != null ? resp.getData().getBaseSalary() : null
@@ -61,10 +89,12 @@ public class RestConsumer implements UserManagementGateway {
                         })
                         .onErrorResume(IllegalArgumentException.class, ex -> {
                             log.warn("[RestConsumer.verify] Usuario no encontrado → {}", ex.getMessage());
-                            return Mono.just(BigDecimal.ZERO); // default cuando no existe
+                            return Mono.just(BigDecimal.ZERO);
                         })
                 );
     }
+
+
 
 
     @Override

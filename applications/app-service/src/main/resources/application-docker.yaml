@@ -1,0 +1,56 @@
+spring:
+  liquibase:
+    enabled: false
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    # Liquibase usa JDBC con los mismos valores que runtime (provenientes de Secrets/ECS env)
+    url: "jdbc:mysql://${adapters.r2dbc.host}:${adapters.r2dbc.port}/${adapters.r2dbc.database}?useUnicode=true&allowPublicKeyRetrieval=true&useSSL=false&serverTimezone=UTC"
+    user: "${adapters.r2dbc.username}"
+    password: "${adapters.r2dbc.password}"
+
+  webflux:
+    # Sirve la app bajo el prefijo /loan para que ALB con path /loan/* funcione
+    base-path: /loan
+
+  lifecycle:
+    timeout-per-shutdown-phase: 60s
+
+adapters:
+  r2dbc:
+    host: "${DB_HOST}"
+    port: "${DB_PORT:3306}"
+    database: "${DB_NAME}"
+    username: "${DB_USERNAME}"
+    password: "${DB_PASSWORD}"
+
+server:
+  port: 8080
+
+security:
+  jwt:
+    secret: "${JWT_SECRET}"
+    expiration-sec: 3600
+    issuer: "loan-service"
+    issuer-uri: ""
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+logging:
+  level:
+    jakarta.persistence.spi: ERROR
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui
+    operations-sorter: method
+    tags-sorter: alpha

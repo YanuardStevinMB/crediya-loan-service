@@ -1,0 +1,94 @@
+{
+    "family": "crediya-prod-loan",
+    "taskRoleArn": "arn:aws:iam::889522049804:role/crediya-prod-ecs-task-general-20250918032850639500000009",
+    "executionRoleArn": "arn:aws:iam::889522049804:role/crediya-prod-loan-task-execution-role",
+    "networkMode": "awsvpc",
+    "containerDefinitions": [
+        {
+            "name": "crediya-prod-loan",
+            "image": "889522049804.dkr.ecr.us-east-2.amazonaws.com/crediya-loan-prod:latest",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "containerPort": 8080,
+                    "hostPort": 8080,
+                    "protocol": "tcp"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "SERVER_PORT",
+                    "value": "8080"
+                },
+                {
+                    "name": "ADAPTERS_R2DBC_HOST",
+                    "value": "crediya-prod-loan-aurora.cluster-cpy6mqu0gnne.us-east-2.rds.amazonaws.com"
+                },
+                {
+                    "name": "ADAPTERS_R2DBC_PORT",
+                    "value": "3306"
+                },
+                {
+                    "name": "DB_PORT",
+                    "value": "3306"
+                },
+                {
+                    "name": "ADAPTERS_R2DBC_DATABASE",
+                    "value": "loan_db"
+                },
+                {
+                    "name": "SPRING_PROFILES_ACTIVE",
+                    "value": "docker"
+                },
+                {
+                    "name": "DB_NAME",
+                    "value": "loan_db"
+                },
+                {
+                    "name": "DB_HOST",
+                    "value": "crediya-prod-loan-aurora.cluster-cpy6mqu0gnne.us-east-2.rds.amazonaws.com"
+                },
+                {
+                    "name": "ADAPTER_RESTCONSUMER_URL",
+                    "value": "http://crediya-prod-nlb-0026197f033a05ff.elb.us-east-2.amazonaws.com:80/iam"
+                }
+            ],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "secrets": [
+                {
+                    "name": "DB_USERNAME",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:889522049804:secret:crediya-prod-loan/db-m56inJ:username::"
+                },
+                {
+                    "name": "DB_PASSWORD",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:889522049804:secret:crediya-prod-loan/db-m56inJ:password::"
+                },
+                {
+                    "name": "JWT_SECRET",
+                    "valueFrom": "arn:aws:secretsmanager:us-east-2:889522049804:secret:crediya-prod-loan/jwt-CQWPR8:jwt_secret::"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/crediya-prod-loan",
+                    "awslogs-region": "us-east-2",
+                    "awslogs-stream-prefix": "crediya-prod-loan"
+                }
+            },
+            "systemControls": []
+        }
+    ],
+    "volumes": [],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "512",
+    "memory": "1024",
+    "runtimePlatform": {
+        "cpuArchitecture": "X86_64",
+        "operatingSystemFamily": "LINUX"
+    }
+}
